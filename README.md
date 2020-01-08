@@ -212,7 +212,7 @@ For more details about how to use Ant, see the [manual](http://ant.apache.org/ma
 | `ant systemtest`                 | Compile and run all the system tests.                          |
 | `ant runsystest -Dtest=testname` | Compile and run the system test named `testname`.              |
 | `ant handin`                     | Generate tarball for submission.                               |
-| `ant eclipse`                    | Generate eclipse project files You can import it by the steps described [here](http://help.eclipse.org/helios/index.jsp?topic=%2Forg.eclipse.platform.doc.user%2Ftasks%2Ftasks-importproject.htm). |
+| `ant eclipse`                    | Generate eclipse project files You can import it by the steps described [here](https://wiki.eclipse.org/EGit/User_Guide#Importing_projects). |
 
 ### 1.3\. Running end-to-end tests
 
@@ -303,7 +303,7 @@ where `file.dat` is the name of a table created with the `convert` command, and 
     already cloned it, move it here.
 *   Under terminal, cd $W/simple-db-MY_USERNAME.
 *   Run `ant eclipse`. The _eclipse_ ant target will generate the eclipse meta files .project and .classpath under $W/simple-db-MY_USERNAME.
-*   Import the generated project to Eclipse using the steps [here](http://help.eclipse.org/helios/index.jsp?topic=%2Forg.eclipse.platform.doc.user%2Ftasks%2Ftasks-importproject.htm) by clicking EGit Documentation > EGit User Guide > Tasks.
+*   Import the generated project to Eclipse using the steps [here](https://wiki.eclipse.org/EGit/User_Guide#Importing_projects) by clicking EGit Documentation > EGit User Guide > Tasks.
 
 **Running Individual Unit and System Tests**
 
