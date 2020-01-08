@@ -5,9 +5,9 @@
 
 **DEADLINES**
 
-**Part 1 due: Monday, April 8th 11:00PM**
+**Part 1 due: Monday, January 13th 11:00PM**
 
-**Due: Wednesday, April 17th 11:00 PM**
+**Due: Wednesday, January 22nd 11:00 PM**
 
 **IMPORTANT**: Part 1 should take about 1 hour (if all goes well) and it's mostly just there to make sure you get set up with the lab early. Part 2 requires a significant amount of time... really significant! It requires reading the code that we provide, figuring out how everything should work together, and then writing quite a bit of code yourself.
 
