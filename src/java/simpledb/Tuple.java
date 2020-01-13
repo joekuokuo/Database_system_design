@@ -17,9 +17,7 @@ public class Tuple implements Serializable {
 //    private Field[] fields;
     private ArrayList<Field> arrFields;
     private static final long serialVersionUID = 1L;
-//    private final TupleDesc ;
-//    private final TupleDesc ;
-
+    
     /**
      * Create a new tuple with the specified schema (type).
      *
@@ -153,6 +151,6 @@ public class Tuple implements Serializable {
     public void resetTupleDesc(TupleDesc td)
     {
         // some code goes here
-//        td = new TupleDesc();
+        this.td = td;
     }
 }
