@@ -8,6 +8,9 @@ import java.util.*;
  */
 public class TupleDesc implements Serializable {
 
+    /** Create an arraylist to store fields  **/
+    private ArrayList<TDItem> itrFieldList;
+
     /**
      * A help class to facilitate organizing the information of each field
      * */
@@ -42,7 +45,11 @@ public class TupleDesc implements Serializable {
      * */
     public Iterator<TDItem> iterator() {
         // some code goes here
-        return null;
+
+        // How to use a iterator() in ArrayList
+        // SOURCE: https://www.geeksforgeeks.org/arraylist-iterator-method-in-java-with-examples/
+        // ps: iterator includes: hasNext(), next()
+        return itrFieldList.iterator();
     }
 
     private static final long serialVersionUID = 1L;
@@ -60,6 +67,13 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         // some code goes here
+        // use the two inputs typeAr and fieldAr to pass the values to the new created TDItem "dummy", and add it to the arraylist.
+        itrFieldList = new ArrayList<>();
+        for(int i = 0; i < typeAr.length; i++){
+            TDItem dummy = new TDItem(typeAr[i], fieldAr[i]);
+            itrFieldList.add(dummy);
+        }
+
     }
 
     /**
@@ -72,6 +86,13 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr) {
         // some code goes here
+
+        // Similar approach to TupleDesc(Type[] typeAr, String[] fieldAr), but set the name of the field null.
+        itrFieldList = new ArrayList<>();
+        for(int i = 0; i < typeAr.length; i++){
+            TDItem dummy = new TDItem(typeAr[i], null);
+            itrFieldList.add(dummy);
+        }
     }
 
     /**
@@ -79,7 +100,14 @@ public class TupleDesc implements Serializable {
      */
     public int numFields() {
         // some code goes here
-        return 0;
+//        int count = 0;
+//        Iterator<TDItem> iter = itrFieldList.iterator();
+//        while(iter.hasNext()){
+//            count ++;
+//            iter.next();
+//        }
+        // use size() to determine the number of field instead
+        return itrFieldList.size();
     }
 
     /**
@@ -93,7 +121,12 @@ public class TupleDesc implements Serializable {
      */
     public String getFieldName(int i) throws NoSuchElementException {
         // some code goes here
-        return null;
+//
+        if (i < 0 || i >= itrFieldList.size()){
+            throw new NoSuchElementException("i is not a valid field reference.");
+        }
+        TDItem e = itrFieldList.get(i);
+        return e.fieldName;
     }
 
     /**
@@ -108,7 +141,11 @@ public class TupleDesc implements Serializable {
      */
     public Type getFieldType(int i) throws NoSuchElementException {
         // some code goes here
-        return null;
+        if (i < 0 || i >= itrFieldList.size()){
+            throw new NoSuchElementException("i is not a valid field reference.");
+        }
+        TDItem e = itrFieldList.get(i);
+        return e.fieldType;
     }
 
     /**
@@ -122,7 +159,14 @@ public class TupleDesc implements Serializable {
      */
     public int fieldNameToIndex(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+//        itrFieldList.contains()
+        for (int i = 0; i < itrFieldList.size(); i++){
+            if (itrFieldList.get(i).fieldName.equals(name)){
+                return i;
+            }
+        }
+        throw new NoSuchElementException("No field with a matching name is found.");
+//        return 0;
     }
 
     /**
@@ -131,7 +175,11 @@ public class TupleDesc implements Serializable {
      */
     public int getSize() {
         // some code goes here
-        return 0;
+        int size = 0;
+        for (TDItem d : itrFieldList){
+            size += d.fieldType.getLen();
+        }
+        return size;
     }
 
     /**
@@ -146,7 +194,24 @@ public class TupleDesc implements Serializable {
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         // some code goes here
-        return null;
+        int totalSize = td1.numFields() + td2.numFields();
+        Type[] t1 = new Type[totalSize];
+        String[] s1 = new String[totalSize];
+        ArrayList<TDItem> itrFieldList2 = new ArrayList<>();
+
+        // set java String[]
+        // https://stackoverflow.com/questions/2564298/java-how-to-initialize-string
+        for (int i = 0; i < td1.numFields(); i++){
+            t1[i] = td1.getFieldType(i);
+            s1[i] = td1.getFieldName(i);
+        }
+        for (int i = 0; i < td2.numFields(); i++){
+            t1[i] = td2.getFieldType(i);
+            s1[i] = td2.getFieldName(i);
+        }
+
+        TupleDesc tdMerge = new TupleDesc(t1,s1);
+        return tdMerge;
     }
 
     /**
@@ -162,7 +227,28 @@ public class TupleDesc implements Serializable {
 
     public boolean equals(Object o) {
         // some code goes here
-        return false;
+
+        /** usage of instanceof:
+        instanceof is a keyword that is used for checking if a reference variable is containing a given type of object reference or not. **/
+        if (o instanceof TupleDesc){
+            if (((TupleDesc) o).numFields() == this.numFields()){
+                for (int i = 0; i < this.numFields(); i++) {
+                    if (((TupleDesc) o).getFieldType(i).equals(this.getFieldType(i))) {
+                        continue;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+            else {
+                return false;
+            }
+
+        }
+        else {
+            return false;
+        }
+        return true;
     }
 
     public int hashCode() {
@@ -175,11 +261,16 @@ public class TupleDesc implements Serializable {
      * Returns a String describing this descriptor. It should be of the form
      * "fieldType[0](fieldName[0]), ..., fieldType[M](fieldName[M])", although
      * the exact format does not matter.
-     * 
-     * @return String describing this descriptor.
+            *
+            * @return String describing this descriptor.
      */
     public String toString() {
         // some code goes here
-        return "";
+        String result = "";
+        for (TDItem d: itrFieldList){
+            result += (d.fieldType.toString() + "(");
+            result += (d.fieldName + ")");
+        }
+        return result;
     }
 }

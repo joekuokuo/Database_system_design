@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 // Tests git push
@@ -11,7 +12,13 @@ import java.util.Iterator;
  */
 public class Tuple implements Serializable {
 
+    private TupleDesc td;
+    private RecordId rid;
+//    private Field[] fields;
+    private ArrayList<Field> arrFields;
     private static final long serialVersionUID = 1L;
+//    private final TupleDesc ;
+//    private final TupleDesc ;
 
     /**
      * Create a new tuple with the specified schema (type).
@@ -22,6 +29,18 @@ public class Tuple implements Serializable {
      */
     public Tuple(TupleDesc td) {
         // some code goes here
+
+        for (int i = 0; i < td.numFields(); i++){
+            if(td.getFieldType(i) instanceof Type){
+                continue;
+            }
+            else{
+                return;
+            }
+        }
+        this.td = td;
+//        fields = new Field[td.numFields()];
+        arrFields = new ArrayList<>();
     }
 
     /**
@@ -29,7 +48,8 @@ public class Tuple implements Serializable {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+
+        return td;
     }
 
     /**
@@ -38,7 +58,8 @@ public class Tuple implements Serializable {
      */
     public RecordId getRecordId() {
         // some code goes here
-        return null;
+
+        return rid;
     }
 
     /**
@@ -49,6 +70,7 @@ public class Tuple implements Serializable {
      */
     public void setRecordId(RecordId rid) {
         // some code goes here
+        this.rid = rid;
     }
 
     /**
@@ -61,6 +83,11 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // some code goes here
+//        fields[i] = f;
+        if (i >= 0 || i < td.numFields()){
+            arrFields.add(i, f);
+        }
+
     }
 
     /**
@@ -71,7 +98,18 @@ public class Tuple implements Serializable {
      */
     public Field getField(int i) {
         // some code goes here
-        return null;
+
+        if (i >= 0|| i < td.numFields()){
+            if (arrFields.get(i) == null){
+                return null;
+            }
+            else {
+                return arrFields.get(i);
+            }
+        }
+//        return arrFields.get(i);
+//        return fields[i];
+        return arrFields.get(i);
     }
 
     /**
@@ -84,7 +122,16 @@ public class Tuple implements Serializable {
      */
     public String toString() {
         // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        String l = "";
+        l += arrFields.get(0).toString() + "\t";
+//        l += td.getFieldType(0).toString() + "|";
+
+        for (int i = 1; i < td.numFields(); i++){
+            l += "\t" + arrFields.get(0).toString();
+
+//            l += "\t" + td.getFieldType(i).toString();
+        }
+        return l;
     }
 
     /**
@@ -94,7 +141,10 @@ public class Tuple implements Serializable {
     public Iterator<Field> fields()
     {
         // some code goes here
-        return null;
+        // Parameters: This method takes the array a which is required to be converted into a List.
+        // Reference: Arrays asList() method in Java with Examples https://www.geeksforgeeks.org/arrays-aslist-method-in-java-with-examples/
+        return arrFields.iterator();
+//        return Arrays.asList(fields).iterator();
     }
 
     /**
@@ -103,5 +153,6 @@ public class Tuple implements Serializable {
     public void resetTupleDesc(TupleDesc td)
     {
         // some code goes here
+//        td = new TupleDesc();
     }
 }
