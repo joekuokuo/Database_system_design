@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,12 +19,36 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Catalog {
 
+//    ArrayList<DbFile> tableList;
+//    ArrayList<Integer> idList;
+//    ArrayList<String> name;
+//    ArrayList<String> pkeyField;
+//    String[] tableValueList;
+
+    private HashMap<String, DbFile> nameMap;
+    private HashMap<Integer, DbFile> idMap;
+    private HashMap<String, DbFile> pkeyFieldMap;
+    private HashMap<Integer, String> idToNameMap;
+    private HashMap<Integer, String> idTopkeyfieldMap;
+
+
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
         // some code goes here
+        nameMap = new HashMap<>();
+        idMap = new HashMap<>();
+        pkeyFieldMap = new HashMap<>();
+        idToNameMap = new HashMap<>();
+        idTopkeyfieldMap = new HashMap<>();
+
+//        tableList = new ArrayList<>();
+//        idList = new ArrayList<>();
+//        name = new ArrayList<>();
+//        pkeyField = new ArrayList<>();
+
     }
 
     /**
@@ -37,6 +62,46 @@ public class Catalog {
      */
     public void addTable(DbFile file, String name, String pkeyField) {
         // some code goes here
+
+        nameMap.put(name, file);
+        idMap.put(file.getId(), file);
+        pkeyFieldMap.put(pkeyField, file);
+        idToNameMap.put(file.getId(), name);
+        idTopkeyfieldMap.put(file.getId(), pkeyField);
+//        if (this.name.contains(name)){
+//            int i = this.name.indexOf(name);
+//            this.tableList.set(i, file);
+//            this.pkeyField.set(i, pkeyField);
+//        }
+//        if (this.idList.contains(file.getId())){
+//            int i = this.idList.indexOf(file.getId());
+//            this.tableList.set(i, file);
+//            this.name.set(i, name);
+//            this.pkeyField.set(i, pkeyField);
+//        }
+//        else{
+//            tableValueList = new String[3];
+//
+////            tableValueList = new ArrayList<>();
+//
+//            // set id into tableValueList
+//            tableValueList[0] = Integer.toString(file.getId());
+//
+//            // set name into tableValueList
+//            tableValueList[1] = name;
+//
+//            // set pkeyField into tableValueList
+//            tableValueList[2] = pkeyField;
+//            // set a map to store file and the rest of it's values
+//            map.put(file, tableValueList);
+//
+//
+//            tableList.add(file);
+//            idList.add(file.getId());
+//            this.name.add(name);
+//            this.pkeyField.add(pkeyField);
+//        }
+
     }
 
     public void addTable(DbFile file, String name) {
@@ -60,7 +125,15 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+        if (this.nameMap.containsKey(name)){
+//            int i = this.name.indexOf(name);
+            return this.nameMap.get(name).getId();
+        }
+
+        else {
+            throw new NoSuchElementException("No such name.");
+        }
+
     }
 
     /**
@@ -71,7 +144,16 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+//        for (int i = 0; i < tableList.size(); i++){
+//            if (this.tableList.get(i).getId() == tableid){
+//                return tableList.get(i).getTupleDesc();
+//            }
+//
+//        }
+        if (this.idMap.containsKey(tableid)){
+            return this.idMap.get(tableid).getTupleDesc();
+        }
+        throw new NoSuchElementException("No such id.");
     }
 
     /**
@@ -82,27 +164,59 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+
+//        for (int i = 0; i < tableList.size(); i++){
+//            if (this.tableList.get(i).getId() == tableid){
+//                return tableList.get(i);
+//            }
+//        }
+        if (this.idMap.containsKey(tableid)){
+            return this.idMap.get(tableid);
+        }
+        throw new NoSuchElementException("No such id.");
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+//        if (idList.contains(tableid)){
+//            return pkeyField.get(idList.indexOf(tableid));
+//        }
+        if (this.idMap.containsKey(tableid)){
+            return this.idTopkeyfieldMap.get(tableid);
+        }
+        throw new NoSuchElementException("No such id.");
     }
 
     public Iterator<Integer> tableIdIterator() {
         // some code goes here
-        return null;
+//        return tableIdIterator();
+        return idMap.keySet().iterator();
+//        return null;
     }
 
     public String getTableName(int id) {
         // some code goes here
-        return null;
+//        if (idList.contains(id)){
+//            return name.get(idList.indexOf(id));
+//        }
+        if (this.idMap.containsKey(id)){
+            return this.idToNameMap.get(id);
+        }
+        throw new NoSuchElementException("No such id.");
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
         // some code goes here
+        nameMap = new HashMap<>();
+        idMap = new HashMap<>();
+        pkeyFieldMap = new HashMap<>();
+        idToNameMap = new HashMap<>();
+        idTopkeyfieldMap = new HashMap<>();
+//        ArrayList<DbFile> tableList = new ArrayList<>();
+//        ArrayList<Integer> idList = new ArrayList<>();
+//        ArrayList<String> name = new ArrayList<>();
+//        ArrayList<String> pkeyField = new ArrayList<>();
     }
     
     /**

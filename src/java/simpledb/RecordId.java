@@ -10,6 +10,8 @@ public class RecordId implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private final PageId pid;
+    private final int tupleno;
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
      * number.
@@ -21,6 +23,8 @@ public class RecordId implements Serializable {
      */
     public RecordId(PageId pid, int tupleno) {
         // some code goes here
+        this.pid = pid;
+        this.tupleno = tupleno;
     }
 
     /**
@@ -28,7 +32,7 @@ public class RecordId implements Serializable {
      */
     public int getTupleNumber() {
         // some code goes here
-        return 0;
+        return tupleno;
     }
 
     /**
@@ -36,7 +40,7 @@ public class RecordId implements Serializable {
      */
     public PageId getPageId() {
         // some code goes here
-        return null;
+        return pid;
     }
 
     /**
@@ -48,7 +52,20 @@ public class RecordId implements Serializable {
     @Override
     public boolean equals(Object o) {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        // To determine whether they are the same class.
+        // reference: https://stackoverflow.com/questions/6821810/determine-if-two-java-objects-are-of-the-same-class
+        // boolean result = object1.getClass().equals( object2.getClass());
+        if (o == null || !o.getClass().equals(this.getClass())){
+            return false;
+        }
+        // transform o to HeapPagId class
+        RecordId that = (RecordId) o;
+
+        // check if they share the same tableId and pgNo.
+        if (this.tupleno == that.tupleno && this.pid == that.pid) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -60,8 +77,7 @@ public class RecordId implements Serializable {
     @Override
     public int hashCode() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
-
+        return pid.hashCode() * 10000 + tupleno;
     }
 
 }

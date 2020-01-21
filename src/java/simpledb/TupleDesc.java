@@ -74,6 +74,8 @@ public class TupleDesc implements Serializable {
             itrFieldList.add(dummy);
         }
 
+        // put the size here.
+
     }
 
     /**
@@ -90,9 +92,11 @@ public class TupleDesc implements Serializable {
         // Similar approach to TupleDesc(Type[] typeAr, String[] fieldAr), but set the name of the field null.
         itrFieldList = new ArrayList<>();
         for(int i = 0; i < typeAr.length; i++){
-            TDItem dummy = new TDItem(typeAr[i], null);
+            TDItem dummy = new TDItem(typeAr[i], "");
             itrFieldList.add(dummy);
         }
+        // put the size here.
+
     }
 
     /**
@@ -166,13 +170,13 @@ public class TupleDesc implements Serializable {
             }
         }
         throw new NoSuchElementException("No field with a matching name is found.");
-//        return 0;
     }
 
     /**
      * @return The size (in bytes) of tuples corresponding to this TupleDesc.
      *         Note that tuples from a given TupleDesc are of a fixed size.
      */
+    // QUESTION: is this the total size of the TupleDesc?
     public int getSize() {
         // some code goes here
         int size = 0;
@@ -197,7 +201,6 @@ public class TupleDesc implements Serializable {
         int totalSize = td1.numFields() + td2.numFields();
         Type[] t1 = new Type[totalSize];
         String[] s1 = new String[totalSize];
-        ArrayList<TDItem> itrFieldList2 = new ArrayList<>();
 
         // set java String[]
         // https://stackoverflow.com/questions/2564298/java-how-to-initialize-string
@@ -206,8 +209,8 @@ public class TupleDesc implements Serializable {
             s1[i] = td1.getFieldName(i);
         }
         for (int i = 0; i < td2.numFields(); i++){
-            t1[i] = td2.getFieldType(i);
-            s1[i] = td2.getFieldName(i);
+            t1[i + td1.numFields()] = td2.getFieldType(i);
+            s1[i + td1.numFields()] = td2.getFieldName(i);
         }
 
         TupleDesc tdMerge = new TupleDesc(t1,s1);

@@ -3,6 +3,8 @@ package simpledb;
 import java.util.*;
 import java.io.*;
 
+import static java.lang.Math.*;
+
 /**
  * Each instance of HeapPage stores data for one page of HeapFiles and 
  * implements the Page interface that is used by BufferPool.
@@ -15,6 +17,7 @@ public class HeapPage implements Page {
 
     final HeapPageId pid;
     final TupleDesc td;
+    // header bit map
     final byte header[];
     final Tuple tuples[];
     final int numSlots;
@@ -22,6 +25,7 @@ public class HeapPage implements Page {
     byte[] oldData;
     private final Byte oldDataLock=new Byte((byte)0);
 
+    List<Tuple> valTuple;
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
      * The format of a HeapPage is a set of header bytes indicating
@@ -67,7 +71,8 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+//        System.out.println((int)floor((BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1)));
+        return (int)floor((BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1));
 
     }
 
@@ -78,7 +83,7 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+        return (int)ceil(numSlots/8);
                  
     }
     
@@ -112,7 +117,7 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -282,15 +287,21 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        int n = 0;
+        for (int i = 0; i < numSlots; i++){
+            if (!isSlotUsed(i)){
+                n++;
+            }
+        }
+        return n;
     }
 
     /**
-     * Returns true if associated slot on this page is filled.
+     * Returns true if associated slot on this page is filled. ????
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+        return ((header[i/8] >> (i % 8)) & 1) == 1;
     }
 
     /**
@@ -307,7 +318,13 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        valTuple = new ArrayList<>();
+        for (int i = 0; i < numSlots; i++){
+            if (isSlotUsed(i)) {
+                valTuple.add(tuples[i]);
+            }
+        }
+        return valTuple.iterator();
     }
 
 }

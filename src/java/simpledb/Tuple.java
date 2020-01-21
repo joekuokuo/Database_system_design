@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import static org.junit.Assert.*;
+
 // Tests git push
 /**
  * Tuple maintains information about the contents of a tuple. Tuples have a
@@ -17,7 +19,7 @@ public class Tuple implements Serializable {
 //    private Field[] fields;
     private ArrayList<Field> arrFields;
     private static final long serialVersionUID = 1L;
-    
+
     /**
      * Create a new tuple with the specified schema (type).
      *
@@ -28,8 +30,10 @@ public class Tuple implements Serializable {
     public Tuple(TupleDesc td) {
         // some code goes here
 
+
         for (int i = 0; i < td.numFields(); i++){
-            if(td.getFieldType(i) instanceof Type){
+            // QUESTION: is this necessary ?
+            if(td.getFieldType(i) == Type.INT_TYPE || td.getFieldType(i) == Type.STRING_TYPE){
                 continue;
             }
             else{
@@ -37,7 +41,6 @@ public class Tuple implements Serializable {
             }
         }
         this.td = td;
-//        fields = new Field[td.numFields()];
         arrFields = new ArrayList<>();
     }
 
@@ -46,7 +49,6 @@ public class Tuple implements Serializable {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-
         return td;
     }
 
@@ -85,7 +87,6 @@ public class Tuple implements Serializable {
         if (i >= 0 || i < td.numFields()){
             arrFields.add(i, f);
         }
-
     }
 
     /**
