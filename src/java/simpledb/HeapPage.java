@@ -3,7 +3,6 @@ package simpledb;
 import java.util.*;
 import java.io.*;
 
-import static java.lang.Math.*;
 
 /**
  * Each instance of HeapPage stores data for one page of HeapFiles and 
@@ -25,7 +24,7 @@ public class HeapPage implements Page {
     byte[] oldData;
     private final Byte oldDataLock=new Byte((byte)0);
 
-    List<Tuple> valTuple;
+    private List<Tuple> valTuple;
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
      * The format of a HeapPage is a set of header bytes indicating
@@ -72,7 +71,7 @@ public class HeapPage implements Page {
     private int getNumTuples() {        
         // some code goes here
 //        System.out.println((int)floor((BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1)));
-        return (int)floor((BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1));
+        return (int)(BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1); // free floor
 
     }
 
@@ -83,8 +82,11 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return (int)ceil(numSlots/8);
-                 
+
+        // use +1 to replace ceil method in Math to save time
+//        return (int)ceil(numSlots/8);
+        return (int)(numSlots/8 + 1);
+
     }
     
     /** Return a view of this page before it was modified
@@ -288,6 +290,7 @@ public class HeapPage implements Page {
     public int getNumEmptySlots() {
         // some code goes here
         int n = 0;
+        // check every slots
         for (int i = 0; i < numSlots; i++){
             if (!isSlotUsed(i)){
                 n++;
@@ -297,10 +300,14 @@ public class HeapPage implements Page {
     }
 
     /**
-     * Returns true if associated slot on this page is filled. ????
+     * Returns true if associated slot on this page is filled. "GOT IT!"
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
+
+        // TA said: Bitwise operator can do the trick.
+        // reference: https://android.jlelse.eu/java-when-to-use-n-8-0xff-and-when-to-use-byte-n-8-2efd82ae7dd7
+        // reference: https://developer.mozilla.org/En/docs/Web/JavaScript/Reference/Operators/Bitwise_Operators
         return ((header[i/8] >> (i % 8)) & 1) == 1;
     }
 

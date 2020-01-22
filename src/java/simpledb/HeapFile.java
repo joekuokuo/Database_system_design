@@ -18,7 +18,9 @@ public class HeapFile implements DbFile {
     private final File file;
     private final TupleDesc td;
     private final int numPages;
+    private final int tableId;
     final int pageSize = BufferPool.getPageSize();
+
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -32,6 +34,7 @@ public class HeapFile implements DbFile {
         this.file = f;
         this.td = td;
         this.numPages = (int)((file.length() + pageSize - 1)/ pageSize);
+        this.tableId = file.getAbsoluteFile().hashCode();
     }
 
     /**
@@ -53,9 +56,10 @@ public class HeapFile implements DbFile {
      * 
      * @return an ID uniquely identifying this HeapFile.
      */
+    // which is tid
     public int getId() {
         // some code goes here
-        return file.getAbsoluteFile().hashCode();
+        return tableId;
     }
 
     /**
@@ -69,11 +73,25 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public Page readPage(PageId pid) {
+    public Page readPage(PageId pid) throws IllegalArgumentException{
         // some code goes here
+        // GOT IT!
 
+        try {
+            byte[] bytes = HeapPage.createEmptyPageData(); // all 0
+            int accessFrom = pid.getPageNumber() * BufferPool.getPageSize();
+            // use randomaccessfile to access the file can access the file from the middle
+            // reference: https://javarevisited.blogspot.com/2015/02/randomaccessfile-example-in-java-read-write-String.html
+            // reference 2: https://examples.javacodegeeks.com/core-java/io/randomaccessfile/java-randomaccessfile-example/
+            RandomAccessFile reader = new RandomAccessFile(file, "r");
+            reader.seek(accessFrom);
+            reader.read(bytes);
+            reader.close();
+            return new HeapPage((HeapPageId) pid, bytes);
+        } catch (IOException e) {
+            throw new IllegalArgumentException();
+        }
 
-        return null;
     }
 
     // see DbFile.java for javadocs
@@ -87,7 +105,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return 0;
+        return numPages;
     }
 
     // see DbFile.java for javadocs
@@ -109,8 +127,10 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
         // some code goes here
-        return null;
+        // ASK TA
+        return new HeapFileIterator(tid, this);
     }
 
 }
+
 
