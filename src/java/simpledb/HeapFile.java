@@ -129,6 +129,7 @@ public class HeapFile implements DbFile {
         // some code goes here
         // ASK TA
         return new HeapFileIterator(tid, this);
+//        return null;
     }
 
 }

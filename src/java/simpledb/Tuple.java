@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import static org.junit.Assert.*;
 
 // Tests git push
 /**
@@ -29,7 +28,6 @@ public class Tuple implements Serializable {
      */
     public Tuple(TupleDesc td) {
         // some code goes here
-
 
         for (int i = 0; i < td.numFields(); i++){
             // QUESTION: is this necessary ?
@@ -58,7 +56,6 @@ public class Tuple implements Serializable {
      */
     public RecordId getRecordId() {
         // some code goes here
-
         return rid;
     }
 
@@ -83,7 +80,6 @@ public class Tuple implements Serializable {
      */
     public void setField(int i, Field f) {
         // some code goes here
-//        fields[i] = f;
         if (i >= 0 || i < td.numFields()){
             arrFields.add(i, f);
         }
@@ -106,8 +102,7 @@ public class Tuple implements Serializable {
                 return arrFields.get(i);
             }
         }
-//        return arrFields.get(i);
-//        return fields[i];
+
         return arrFields.get(i);
     }
 
@@ -123,12 +118,8 @@ public class Tuple implements Serializable {
         // some code goes here
         String l = "";
         l += arrFields.get(0).toString() + "\t";
-//        l += td.getFieldType(0).toString() + "|";
-
         for (int i = 1; i < td.numFields(); i++){
             l += "\t" + arrFields.get(0).toString();
-
-//            l += "\t" + td.getFieldType(i).toString();
         }
         return l;
     }

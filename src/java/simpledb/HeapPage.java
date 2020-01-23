@@ -3,9 +3,11 @@ package simpledb;
 import java.util.*;
 import java.io.*;
 
-
+//
+import static java.lang.Math.*;
+//
 /**
- * Each instance of HeapPage stores data for one page of HeapFiles and 
+ * Each instance of HeapPage stores data for one page of HeapFiles and
  * implements the Page interface that is used by BufferPool.
  *
  * @see HeapFile
@@ -24,7 +26,7 @@ public class HeapPage implements Page {
     byte[] oldData;
     private final Byte oldDataLock=new Byte((byte)0);
 
-    private List<Tuple> valTuple;
+//    private List<Tuple> valTuple;
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
      * The format of a HeapPage is a set of header bytes indicating
@@ -51,7 +53,7 @@ public class HeapPage implements Page {
         header = new byte[getHeaderSize()];
         for (int i=0; i<header.length; i++)
             header[i] = dis.readByte();
-        
+
         tuples = new Tuple[numSlots];
         try{
             // allocate and read the actual records of this page
@@ -65,30 +67,36 @@ public class HeapPage implements Page {
         setBeforeImage();
     }
 
+
     /** Retrieve the number of tuples on this page.
         @return the number of tuples on this page
     */
-    private int getNumTuples() {        
+    private int getNumTuples() {
         // some code goes here
 //        System.out.println((int)floor((BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1)));
         return (int)(BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1); // free floor
 
+//        return (int)floor((BufferPool.getPageSize() * 8) / (td.getSize() * 8 + 1));
     }
 
     /**
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
-    private int getHeaderSize() {        
-        
+    private int getHeaderSize() {
+
         // some code goes here
 
         // use +1 to replace ceil method in Math to save time
 //        return (int)ceil(numSlots/8);
-        return (int)(numSlots/8 + 1);
+//        return (int)(numSlots/8 + 1);
+        // 17/8 = 2, ceil(2) -> 2; 16/8 = 2, output = 3 WRONG!
+
+        return (int)ceil(numSlots/ 8.0);
+
 
     }
-    
+
     /** Return a view of this page before it was modified
         -- used by recovery */
     public HeapPage getBeforeImage(){
@@ -106,7 +114,7 @@ public class HeapPage implements Page {
         }
         return null;
     }
-    
+
     public void setBeforeImage() {
         synchronized(oldDataLock)
         {
@@ -203,7 +211,7 @@ public class HeapPage implements Page {
                 Field f = tuples[i].getField(j);
                 try {
                     f.serialize(dos);
-                
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -281,7 +289,7 @@ public class HeapPage implements Page {
     public TransactionId isDirty() {
         // some code goes here
 	// Not necessary for lab1
-        return null;      
+        return null;
     }
 
     /**
@@ -308,7 +316,7 @@ public class HeapPage implements Page {
         // TA said: Bitwise operator can do the trick.
         // reference: https://android.jlelse.eu/java-when-to-use-n-8-0xff-and-when-to-use-byte-n-8-2efd82ae7dd7
         // reference: https://developer.mozilla.org/En/docs/Web/JavaScript/Reference/Operators/Bitwise_Operators
-        return ((header[i/8] >> (i % 8)) & 1) == 1;
+        return ((header[i / 8] >> (i % 8)) & 1) == 1;
     }
 
     /**
@@ -325,7 +333,10 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        valTuple = new ArrayList<>();
+//        for (int i=0; i < tuples.length; i++)
+//            System.out.println(tuples[i]);
+
+        List<Tuple> valTuple = new ArrayList<>();
         for (int i = 0; i < numSlots; i++){
             if (isSlotUsed(i)) {
                 valTuple.add(tuples[i]);

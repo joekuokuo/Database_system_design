@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * A RecordId is a reference to a specific tuple on a specific page of a
@@ -55,17 +56,13 @@ public class RecordId implements Serializable {
         // To determine whether they are the same class.
         // reference: https://stackoverflow.com/questions/6821810/determine-if-two-java-objects-are-of-the-same-class
         // boolean result = object1.getClass().equals( object2.getClass());
-        if (o == null || !o.getClass().equals(this.getClass())){
+        if (o == null || !(o instanceof RecordId)){
             return false;
         }
         // transform o to HeapPagId class
         RecordId that = (RecordId) o;
-
         // check if they share the same tableId and pgNo.
-        if (this.tupleno == that.tupleno && this.pid == that.pid) {
-            return true;
-        }
-        return false;
+        return that.pid.equals(pid) && this.tupleno == that.tupleno;
     }
 
     /**

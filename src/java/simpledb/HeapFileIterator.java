@@ -8,7 +8,7 @@ public class HeapFileIterator implements DbFileIterator{
     private final TransactionId tid;
     private final HeapFile hf;
     private int pgNo;
-    private Iterator<Tuple> tupleIterator = null;
+    private Iterator<Tuple> tupleIterator;
 
     public HeapFileIterator(TransactionId tid, HeapFile hf){
         this.tid = tid;
