@@ -1,0 +1,46 @@
+Lab1 write up:
+
+In your own words, describe what Lab1 was about: Describe the various components that
+you implemented and how they work. This part needs to
+demonstrate your understanding of the lab! If your description
+looks like a copy paste of the instructions or a copy-paste of the
+provided documentation you will lose points.
+
+We first implement Tuple and TupleDesc class. In Tuple class, it holds fields of TupleDesc, RecordId and a list of Field. To construct a Tuple object, one needs to pass a TupleDesc to the Tuple constructor, and the constructor will first verified whether the value is valid in every FieldType the tuple descriptor contains before assigning the value passing in to the memory. Also in the constructor the a list of field is assigned to store the field of TupleDesc. RecordId and field of TupleDesc is also set and get in Tuple class. The iterator of filed is implemented by the ArrayList.iterator() which is a built in function in ArrayList class.
+
+In TupleDesc, it stores a list of TDItem which is a subclass in TupleDesc. In the constructor, two arrays are passed into it. The first one is a Type array. The second one is string of field. The values will be taken out one by one from this two array to construct a TDItem, and store this TDItem in the list of field. It's valid to miss out the name of the field to construct a TDItem. The numFields() will return the size of the list field. Using an index, the field name and the field type can be obtained. Using a name can also trace back the index of that name of field. To calculate the size of the total field, we iterate through all the field in the list and sum up the size after getting the length of each of the field. The TupleDesc class can also perform merge operation by passing two TupleDesc into. It's implemented by creating two new array, and copy all the Types and name of field into this bigger array which total size is the sum of the two TupleDesc, and declare a new merged TupleDesc by passing two new copied array into it.
+
+The catalog class consists of a list of the tables and schemas of the tables that are currently in the database. With a name or a tableId, a specific table can be retrieved. DatabaseFile can also be retrieved by tableId. Adding method of table is included in this class as well. The catalog class keeps track of all available tables in the database and their associated schemas.
+
+The buffer pool class is responsible for caching pages in memory that have been recently read from disk. The buffer pool stores all the pages called previously in the memory for the next time call to reduce the time reading pages from the disk. With a specific PageId, a page in the buffer pool can be retrieved. 
+
+HeapPage is an object store in the HeapFile, and a heapPage contains a list of tuples and a header to keep track of the available slots. Each heapPage has a specific heapPageId. The number of slots are calculated by the page size in buffer pool *8 divided by (the size of the TupleDesc + 1) and set the value to the biggest integer closest to the value.
+
+A recordId is a reference to a specific tuple on a specific page of a specific table. With a recordId, the specific tuple can be directly accessed by its tuple number and its pageID.
+
+HeapFile is an implementation of a DbFile that stores a collection of tuples in no particular order.
+
+Describe any design decisions you made. These may be minimal for
+Lab 1.
+
+
+Give one example of a unit test that could be added to improve the
+set of unit tests that we provided for this lab. You do not need to
+write the code of the unit test, only describe it in the write-up.
+
+
+If you wrote one or more especially useful new unit-tests, you can submit
+a pull request and we will consider integrating your tests into the lab for next year.
+
+
+Pull requests won't get extra credit, only eternal glory if the tests get integrated.
+
+
+Discuss and justify any changes you made to the API. You really
+should not change the API. If you plan to make a change, ask the
+TAs first.
+
+
+Describe any missing or incomplete elements of your code.
+If you have any feedback for us on the assignment, you can add it to the writeup, send us an email, or make a note and paste your note in the course evaluation form at the end of the quarter.
+
