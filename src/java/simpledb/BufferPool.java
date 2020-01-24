@@ -29,9 +29,9 @@ public class BufferPool {
 
     private Page[] Pages;
     private final int numPages;
-    private HashMap<TransactionId, Page> tidToPage;
+//    private HashMap<TransactionId, Page> tidToPage;
     private HashMap<PageId, Page> pidToPage;
-    private HashMap<Permissions, Page> permToPage;
+//    private HashMap<Permissions, Page> permToPage;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -42,9 +42,9 @@ public class BufferPool {
         // some code goes here
         this.numPages = numPages;
         this.Pages = new Page[numPages];
-        tidToPage = new HashMap<>();
+//        tidToPage = new HashMap<>();
         pidToPage = new HashMap<>();
-        permToPage = new HashMap<>();
+//        permToPage = new HashMap<>();
 
     }
     

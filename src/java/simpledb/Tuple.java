@@ -15,9 +15,9 @@ public class Tuple implements Serializable {
 
     private TupleDesc td;
     private RecordId rid;
-//    private Field[] fields;
     private ArrayList<Field> arrFields;
     private static final long serialVersionUID = 1L;
+//    private final TupleDesc ;
 
     /**
      * Create a new tuple with the specified schema (type).
@@ -29,17 +29,17 @@ public class Tuple implements Serializable {
     public Tuple(TupleDesc td) {
         // some code goes here
 
-        for (int i = 0; i < td.numFields(); i++){
+        for (int i = 0; i < td.numFields(); i++) {
             // QUESTION: is this necessary ?
-            if(td.getFieldType(i) == Type.INT_TYPE || td.getFieldType(i) == Type.STRING_TYPE){
+            if (td.getFieldType(i) == Type.INT_TYPE || td.getFieldType(i) == Type.STRING_TYPE) {
                 continue;
-            }
-            else{
+            } else {
                 return;
             }
         }
         this.td = td;
         arrFields = new ArrayList<>();
+
     }
 
     /**
@@ -119,7 +119,7 @@ public class Tuple implements Serializable {
         String l = "";
         l += arrFields.get(0).toString() + "\t";
         for (int i = 1; i < td.numFields(); i++){
-            l += "\t" + arrFields.get(0).toString();
+            l += "\t" + arrFields.get(i).toString();
         }
         return l;
     }

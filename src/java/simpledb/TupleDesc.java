@@ -11,6 +11,9 @@ public class TupleDesc implements Serializable {
     /** Create an arraylist to store fields  **/
     private ArrayList<TDItem> itrFieldList;
 
+    private int size = 0;
+
+
     /**
      * A help class to facilitate organizing the information of each field
      * */
@@ -72,10 +75,10 @@ public class TupleDesc implements Serializable {
         for(int i = 0; i < typeAr.length; i++){
             TDItem dummy = new TDItem(typeAr[i], fieldAr[i]);
             itrFieldList.add(dummy);
+            size += dummy.fieldType.getLen();
         }
 
         // put the size here.
-
     }
 
     /**
@@ -94,9 +97,9 @@ public class TupleDesc implements Serializable {
         for(int i = 0; i < typeAr.length; i++){
             TDItem dummy = new TDItem(typeAr[i], "");
             itrFieldList.add(dummy);
+            size += dummy.fieldType.getLen();
         }
         // put the size here.
-
     }
 
     /**
@@ -179,10 +182,10 @@ public class TupleDesc implements Serializable {
     // QUESTION: is this the total size of the TupleDesc?
     public int getSize() {
         // some code goes here
-        int size = 0;
-        for (TDItem d : itrFieldList){
-            size += d.fieldType.getLen();
-        }
+//        int size = 0;
+//        for (TDItem d : itrFieldList){
+//            size += d.fieldType.getLen();
+//        } Move to the front
         return size;
     }
 
