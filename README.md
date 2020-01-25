@@ -104,7 +104,25 @@ Note that this implementation requires space linear in the number of distinct gr
 
 At this point, your code should pass the unit tests IntegerAggregatorTest, StringAggregatorTest, and AggregateTest. Furthermore, you should be able to pass the AggregateTest system test.
 
-### End of Part 1
+<!--### End of Part 1-->
+### Checkpoint -- End of Part 1
+
+You may do this by executing the bash script `turnInLab.sh` with the tag *lab2-part1*
+ (see the end of
+the assignment for detailed submission instructions) as follows:
+
+```sh
+$ ./turnInLab.sh lab2-part1
+```
+
+Submitting the first
+part of lab 2 on time is worth 10% of your final grade for lab 2
+and will be graded all-or-nothing. We will NOT run any of the unit
+tests. We will just visually inspect that you submitted something
+reasonably complete.
+
+After executing the `turnInLab.sh` script, make sure to check your repository on GitLab to ensure that the tag has been property applied!  You may do this by visiting `https://gitlab.cs.washington.edu/cse444-20wi/simple-db-YOUR_USERNAME/tags`.
+
 ---
 
 ### 2.3\. HeapFile Mutability
