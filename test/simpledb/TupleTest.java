@@ -16,6 +16,8 @@ public class TupleTest extends SimpleDbTestBase {
         TupleDesc td = Utility.getTupleDesc(2);
 
         Tuple tup = new Tuple(td);
+//        System.out.println(new IntField(0).toString());
+//        System.out.println(tup.getField(0).toString());
         tup.setField(0, new IntField(-1));
         tup.setField(1, new IntField(0));
 
@@ -37,6 +39,7 @@ public class TupleTest extends SimpleDbTestBase {
         Tuple tup = new Tuple(td);
         assertEquals(td, tup.getTupleDesc());
     }
+
 
     /**
      * Unit test for Tuple.getRecordId() and Tuple.setRecordId()

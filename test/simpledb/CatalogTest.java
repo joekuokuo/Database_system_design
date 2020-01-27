@@ -52,7 +52,7 @@ public class CatalogTest extends SimpleDbTestBase {
         } catch (NoSuchElementException e) {
             // Expected to get here
         }
-        
+
         try {
             Database.getCatalog().getTableId("foo");
             Assert.fail("Should not find table with name foo");
