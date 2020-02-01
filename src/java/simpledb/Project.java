@@ -35,9 +35,11 @@ public class Project extends Operator {
         String[] fieldAr = new String[fieldList.size()];
         TupleDesc childtd = child.getTupleDesc();
 
+        // Deep copy.
         for (int i = 0; i < fieldAr.length; i++) {
             fieldAr[i] = childtd.getFieldName(fieldList.get(i));
         }
+
         td = new TupleDesc(types, fieldAr);
     }
 
