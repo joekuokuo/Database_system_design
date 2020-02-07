@@ -149,9 +149,16 @@ public class Tuple implements Serializable {
     public static Tuple merge(Tuple t1, Tuple t2) {
         Tuple tuple = new Tuple(TupleDesc.merge(t1.getTupleDesc(), t2.getTupleDesc()));
         tuple.rid = null;
-        System.arraycopy(t1.arrFields.toArray(), 0, tuple.arrFields.toArray(), 0, t1.getTupleDesc().numFields());
-        System.arraycopy(t2.arrFields.toArray(), 0, tuple.arrFields.toArray(), t1.getTupleDesc().numFields(),
-                t2.getTupleDesc().numFields());
+
+        // Need to copy the list, cannot just assign to it!!!
+        ArrayList<Field> t1Field = new ArrayList<Field>(t1.arrFields);
+        ArrayList<Field> t2Field = new ArrayList<Field>(t2.arrFields);
+        t1Field.addAll(t2Field);
+        tuple.arrFields = t1Field;
+
+//        System.arraycopy(t1.arrFields.toArray(), 0, tuple.arrFields.toArray(), 0, t1.getTupleDesc().numFields());
+//        System.arraycopy(t2.arrFields.toArray(), 0, tuple.arrFields.toArray(), t1.getTupleDesc().numFields(),
+//                t2.getTupleDesc().numFields());
         return tuple;
     }
 }

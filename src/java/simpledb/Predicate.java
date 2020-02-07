@@ -105,8 +105,9 @@ public class Predicate implements Serializable {
      */
     public boolean filter(Tuple t) {
         // some code goes here
-        return false;
+        return t.getField(field).compare(op, operand);
     }
+
 
     /**
      * Returns something useful, like "f = field_id op = op_string operand =
@@ -114,6 +115,6 @@ public class Predicate implements Serializable {
      */
     public String toString() {
         // some code goes here
-        return "";
+        return "f = " + String.valueOf(field) + "op = " + op.toString() + "operand = " + operand.toString();
     }
 }

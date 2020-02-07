@@ -13,6 +13,8 @@ public class Join extends Operator {
     private OpIterator child2;
     private TupleDesc td;
     private Tuple tup;
+    private Set<String> tpSet = new HashSet<>();
+    private boolean debug = false;
     /**
      * Constructor. Accepts two children to join and the predicate to join them
      * on
@@ -87,8 +89,10 @@ public class Join extends Operator {
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+
         close();
         open();
+
     }
 
     /**
@@ -112,6 +116,7 @@ public class Join extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
 
+//        HashMap<Tuple> tpMap = new HashMap();
         while (true) {
             if (tup == null) {
                 if (child1.hasNext()) {
@@ -124,7 +129,21 @@ public class Join extends Operator {
             while (child2.hasNext()) {
                 Tuple tup2 = child2.next();
                 if (p.filter(tup, tup2)) {
-                    return Tuple.merge(tup, tup2);
+//                    System.out.println("tup: " + tup.toString() + " tup2: " + tup2.toString());
+                    Tuple tpMerge = Tuple.merge(tup, tup2);
+                    // Check if where is an existing tuple in the result
+                    if (tpSet.contains(tpMerge.toString())){
+                        continue;
+                    }
+                    tpSet.add(tpMerge.toString());
+
+                    if (debug){
+                        System.out.println("tup: " + tup.toString() + " tup2: " + tup2.toString());
+                        System.out.println("tuple merge: " + tpMerge.toString());
+                        System.out.println("tuple merge: " + tpMerge.toString());
+                    }
+
+                    return tpMerge;
                 }
             }
             tup = null;
