@@ -12,7 +12,7 @@ public class StringAggregator implements Aggregator {
     private int afield;
     private Op what;
 
-    private final Map<Field, Integer> countGroupedBy;
+    private final Map<Field, Integer> countGroupBy;
     private int noGroupCount;
     private String groupFieldName;
     /**
@@ -35,7 +35,7 @@ public class StringAggregator implements Aggregator {
         this.afield = afield;
         this.what = what;
         this.noGroupCount = 0;
-        this.countGroupedBy = new HashMap<Field, Integer>();
+        countGroupBy = new HashMap<Field, Integer>();
 
     }
 
@@ -50,11 +50,11 @@ public class StringAggregator implements Aggregator {
         } else {
             groupFieldName = tup.getTupleDesc().getFieldName(gbfield);
             Field groupField = tup.getField(gbfield);
-            if (!countGroupedBy.containsKey(groupField)) {
-                countGroupedBy.put(groupField, 1);
+            if (!countGroupBy.containsKey(groupField)) {
+                countGroupBy.put(groupField, 1);
             } else {
-                int count = countGroupedBy.get(groupField);
-                countGroupedBy.put(groupField, count+1);
+                int count = countGroupBy.get(groupField);
+                countGroupBy.put(groupField, count+1);
             }
         }
     }
@@ -69,26 +69,34 @@ public class StringAggregator implements Aggregator {
      */
     public OpIterator iterator() {
         // some code goes here
+        TupleDesc td = new TupleDesc(
+                new Type[]{gbfieldtype, Type.INT_TYPE},
+                new String[]{groupFieldName, what.toString()});
 
+        ArrayList<Tuple> tuples = new ArrayList<>();
         if (gbfield != NO_GROUPING) {
-            TupleDesc tupleDesc = new TupleDesc(
-                    new Type[]{gbfieldtype, Type.INT_TYPE},
-                    new String[]{groupFieldName, what.toString()});
 
-            ArrayList<Tuple> tuples = new ArrayList<Tuple>();
 
-            for (Field group : countGroupedBy.keySet()) {
+            for (Field group : countGroupBy.keySet()) {
 
-                Tuple tuple = new Tuple(tupleDesc);
+                Tuple tuple = new Tuple(td);
                 tuple.setField(0, group);
-                tuple.setField(1, new IntField(countGroupedBy.get(group)));
+                tuple.setField(1, new IntField(countGroupBy.get(group)));
                 tuples.add(tuple);
             }
 
-            return new TupleIterator(tupleDesc, tuples);
-//        throw new UnsupportedOperationException("please implement me for lab2");
         }
-        return null;
+        else{
+            for (Field group : countGroupBy.keySet()) {
+                int value = countGroupBy.get(group);
+                Tuple tuple = new Tuple(td);
+                tuple.setField(0, new IntField(value));
+                tuples.add(tuple);
+            }
+
+        }
+        return new TupleIterator(td, tuples);
+
     }
 
 }

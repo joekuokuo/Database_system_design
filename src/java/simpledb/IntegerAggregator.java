@@ -1,5 +1,6 @@
 package simpledb;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -50,21 +51,33 @@ public class IntegerAggregator implements Aggregator {
      */
     public void mergeTupleIntoGroup(Tuple tup) {
         // some code goes here
-        Field groupField = gbfield == NO_GROUPING ? new IntField(0): tup.getField(gbfield);
-        groupFieldName = gbfield == NO_GROUPING ? null : tup.getTupleDesc().getFieldName(gbfield);
-        IntField aggregateField = (IntField) tup.getField(afield);
-        int countAddition = what == Op.SC_AVG ? ((IntField) tup.getField(afield+1)).getValue() : 1;
+        Field groupField;
+
+        if (gbfield == NO_GROUPING){
+            groupField = new IntField(0);
+            groupFieldName = null;
+        }
+        else {
+            groupField = tup.getField(gbfield);
+            groupFieldName = tup.getTupleDesc().getFieldName(gbfield);
+        }
+
+        int aggregateValue = ((IntField)tup.getField(afield)).getValue();
+        // Haven't seen
         if (!countGroupedBy.containsKey(groupField)) {
-            countGroupedBy.put(groupField, countAddition);
-            valueGroupedBy.put(groupField, aggregateField.getValue());
-        } else {
-            countGroupedBy.put(groupField, countGroupedBy.get(groupField)+countAddition);
-            Integer value = valueGroupedBy.get(groupField);
-            Integer aggregateValue = aggregateField.getValue();
+            countGroupedBy.put(groupField, 1);
+            valueGroupedBy.put(groupField, aggregateValue);
+
+        }
+        // Seen before
+        else {
+            countGroupedBy.put(groupField, countGroupedBy.get(groupField) + 1);
+            int value = valueGroupedBy.get(groupField);
+
+            // Op :
             switch (what) {
-                case AVG:
-                case SUM_COUNT:
                 case SUM:
+                case AVG:
                     valueGroupedBy.put(groupField, value + aggregateValue);
                     break;
                 case MAX:
@@ -90,13 +103,47 @@ public class IntegerAggregator implements Aggregator {
      */
     public OpIterator iterator() {
         // some code goes here
-        boolean hasGroup = gbfield != NO_GROUPING;
-        // To be continue...
+        boolean grouped = (gbfield != NO_GROUPING);
+
+        // Construct a new td
+        TupleDesc td;
+        Type[] typeArr;
+        String[] stringArr;
+        // Construct a new td
+        if (grouped) {
+            typeArr = new Type[]{gbFieldType, Type.INT_TYPE};
+            stringArr = new String[]{groupFieldName, what.toString()};
+        }
+        else {
+            typeArr = new Type[]{Type.INT_TYPE};
+            stringArr = new String[]{what.toString()};
+        }
+        td = new TupleDesc(typeArr, stringArr);
+
+        // Construct a new tuple list
+        ArrayList<Tuple> tuples = new ArrayList<>();
+
+        for (Field group : countGroupedBy.keySet()) {
 
 
+            Tuple tuple = new Tuple(td);
+            int value = valueGroupedBy.get(group);
+            if (what == Op.AVG){
+                value /= countGroupedBy.get(group);
+            }
+            if (what == Op.COUNT){
+                value = countGroupedBy.get(group);
+            }
 
-        throw new
-        UnsupportedOperationException("please implement me for lab2");
+            if (grouped) {
+                tuple.setField(0, group);
+            }
+            tuple.setField(grouped ? 1:0, new IntField(value));
+            tuples.add(tuple);
+        }
+        return new TupleIterator(td, tuples);
+
+
     }
 
 }
