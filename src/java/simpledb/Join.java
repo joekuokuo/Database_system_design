@@ -13,7 +13,6 @@ public class Join extends Operator {
     private OpIterator child2;
     private TupleDesc td;
     private Tuple tup;
-    private Set<String> tpSet = new HashSet<>();
     private boolean debug = false;
     /**
      * Constructor. Accepts two children to join and the predicate to join them
@@ -84,15 +83,17 @@ public class Join extends Operator {
         super.close();
         child1.close();
         child2.close();
+
         tup = null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
-
         close();
-        open();
+//        child1.rewind();
+//        child2.rewind();
 
+        open();
     }
 
     /**
@@ -115,6 +116,7 @@ public class Join extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
+        Set<String> tpSet = new HashSet<>();
 
         while (true) {
             if (tup == null) {
