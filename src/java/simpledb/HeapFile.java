@@ -34,6 +34,7 @@ public class HeapFile implements DbFile {
         this.file = f;
         this.td = td;
         this.numPages = (int)((file.length() + pageSize - 1)/ pageSize);
+//        this.numPages = (int) file.length() / BufferPool.getPageSize();
         this.tableId = file.getAbsoluteFile().hashCode();
     }
 
@@ -79,6 +80,12 @@ public class HeapFile implements DbFile {
 
         try {
             byte[] bytes = HeapPage.createEmptyPageData(); // all 0
+
+            // When page is full
+            if (pid.getPageNumber() == numPages){
+                Page p = new HeapPage((HeapPageId)pid, bytes);
+                writePage(p);
+            }
             int accessFrom = pid.getPageNumber() * BufferPool.getPageSize();
             // use randomaccessfile to access the file can access the file from the middle
             // reference: https://javarevisited.blogspot.com/2015/02/randomaccessfile-example-in-java-read-write-String.html
@@ -97,7 +104,12 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
         // some code goes here
-        // not necessary for lab1
+        // Lab2 implementation
+        RandomAccessFile randomAccessFile;
+        randomAccessFile = new RandomAccessFile(file, "rw");
+        randomAccessFile.seek(BufferPool.getPageSize() * page.getId().getPageNumber());
+        randomAccessFile.write(page.getPageData());
+        randomAccessFile.close();
     }
 
     /**
@@ -113,6 +125,7 @@ public class HeapFile implements DbFile {
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         return null;
+
         // not necessary for lab1
     }
 
@@ -120,8 +133,17 @@ public class HeapFile implements DbFile {
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
         // some code goes here
-        return null;
-        // not necessary for lab1
+
+        if (t.getRecordId() == null) {
+            throw new DbException("Record id is null");
+        }
+
+        HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), Permissions.READ_WRITE);
+        page.deleteTuple(t);
+        page.markDirty(true, tid);
+
+        return new ArrayList<Page>(Arrays.asList(page));
+
     }
 
     // see DbFile.java for javadocs

@@ -156,9 +156,6 @@ public class Tuple implements Serializable {
         t1Field.addAll(t2Field);
         tuple.arrFields = t1Field;
 
-//        System.arraycopy(t1.arrFields.toArray(), 0, tuple.arrFields.toArray(), 0, t1.getTupleDesc().numFields());
-//        System.arraycopy(t2.arrFields.toArray(), 0, tuple.arrFields.toArray(), t1.getTupleDesc().numFields(),
-//                t2.getTupleDesc().numFields());
         return tuple;
     }
 }

@@ -116,7 +116,6 @@ public class Join extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
 
-//        HashMap<Tuple> tpMap = new HashMap();
         while (true) {
             if (tup == null) {
                 if (child1.hasNext()) {
