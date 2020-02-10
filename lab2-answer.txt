@@ -1,0 +1,40 @@
+Lab2 writeup:
+
+Part1:
+Join part:
+By constructing the Join class, we pass the join predicate and 2 OpIterator into the constructor,
+and create a new tuple descriptor by merging 2 OpIterator. Using the nested loop method, we first pick the first
+child.next(). It should return a tuple and rewind the child2 at the same time, and then we compare each tuples in
+child2. If the tuples in child2 match the filter, we merge it into a new tuple. We have to create a new helper function
+in Tuple class in order to do so. To speed up the look up, a tuple set is create to record whether the merge tuples
+are already seen. If it was seen before, we neglect it.
+
+Filter part:
+We pass a predicate and a OpIterator into the constructor. Using a simple filter function to check whether
+the tuples in the child is matched.
+
+Predicate part:
+We implement five different operations. The most important part is the filter function. It is implemented by simply
+call compare in the Field class to compare the tuple passed through and the operation and the operand.
+
+Aggregate part:
+We have OpIterator child, Aggregate operation aop, aggregate field and group up field. If it's grouped up, we could assign
+the aggregator with the group up field and the aggregate field and aop to be either IntegerAggegator or a StringAggregator.
+It's very important to check whether it's group up or not. When open(), if the child has next tuple, the aggregator will merge
+the tuple into the existing group. When getting tuple descriptor, if the group up field is no grouping, we return a tuple
+descriptor with aggregate field type and the name of aop only. If it's group up, we return a tuple descriptor with the group up
+field and the aggregate field type and the name of the group up field.
+
+StringAggregator part:
+By using a map, we keep track of the times of grouping. We create a TupleIterator with tuples we grouped up and a tuple descriptor
+as an iterator, and the tuple list also keep track of the times of grouping. So the returned TupleIterator contains all the information
+we need.
+
+IntegerAggregator part:
+By using 2 map, we keep track of the times and the value of grouping, since the integer grouping also need to record the value of
+grouping over specific schema. The basic part is alike StringAggregator. The tricky part is that when summing and averaging, we need
+to accumulate the value and the aggregate value which is the previous value, and while iterating it we divide the count of the group up
+when averaging it. When maximum and minimum, we simply can use Math.max and Math.min to update the value of group by. While count,
+we only need to use the count of group by as we always keeping track of.
+
+

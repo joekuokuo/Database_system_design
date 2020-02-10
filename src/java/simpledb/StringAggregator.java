@@ -75,8 +75,6 @@ public class StringAggregator implements Aggregator {
 
         ArrayList<Tuple> tuples = new ArrayList<>();
         if (gbfield != NO_GROUPING) {
-
-
             for (Field group : countGroupBy.keySet()) {
 
                 Tuple tuple = new Tuple(td);

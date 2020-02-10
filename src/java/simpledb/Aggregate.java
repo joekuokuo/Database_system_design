@@ -50,7 +50,7 @@ public class Aggregate extends Operator {
         Type gbFieldType;
         Type aFieldType = child.getTupleDesc().getFieldType(afield);
 
-        if (gfield==Aggregator.NO_GROUPING) {
+        if (gfield == Aggregator.NO_GROUPING) {
             gbFieldType = null;
         } else {
             gbFieldType = child.getTupleDesc().getFieldType(gfield);

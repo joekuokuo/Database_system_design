@@ -124,8 +124,6 @@ public class IntegerAggregator implements Aggregator {
         ArrayList<Tuple> tuples = new ArrayList<>();
 
         for (Field group : countGroupedBy.keySet()) {
-
-
             Tuple tuple = new Tuple(td);
             int value = valueGroupedBy.get(group);
             if (what == Op.AVG){

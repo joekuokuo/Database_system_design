@@ -5,6 +5,9 @@ import java.io.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -15,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * The BufferPool is also responsible for locking;  when a transaction fetches
  * a page, BufferPool checks that the transaction has the appropriate
  * locks to read/write the page.
- * 
+ *
  * @Threadsafe, all fields are final
  */
 public class BufferPool {
@@ -23,7 +26,7 @@ public class BufferPool {
     private static final int DEFAULT_PAGE_SIZE = 4096;
 
     private static int pageSize = DEFAULT_PAGE_SIZE;
-    
+
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
@@ -32,9 +35,15 @@ public class BufferPool {
     private Page[] Pages;
     private final int numPages;
 //    private HashMap<TransactionId, Page> tidToPage;
-    private HashMap<PageId, Page> pidToPage;
+
+    // Switch to ConcurrentHashMap since there was a concurrent issue while testing.
+    private ConcurrentHashMap<PageId, Page> pidToPage;
+
 //    private HashMap<Permissions, Page> permToPage;
 
+    // For eviction part.
+    private HashMap<PageId, Integer> leastUsedPage;
+    private int mark = 0;
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -45,20 +54,21 @@ public class BufferPool {
         this.numPages = numPages;
         this.Pages = new Page[numPages];
 //        tidToPage = new HashMap<>();
-        pidToPage = new HashMap<>();
+        pidToPage = new ConcurrentHashMap<>();
 //        permToPage = new HashMap<>();
+        leastUsedPage = new HashMap<>();
 
     }
-    
+
     public static int getPageSize() {
       return pageSize;
     }
-    
+
     // THIS FUNCTION SHOULD ONLY BE USED FOR TESTING!!
     public static void setPageSize(int pageSize) {
     	BufferPool.pageSize = pageSize;
     }
-    
+
     // THIS FUNCTION SHOULD ONLY BE USED FOR TESTING!!
     public static void resetPageSize() {
     	BufferPool.pageSize = DEFAULT_PAGE_SIZE;
@@ -86,14 +96,19 @@ public class BufferPool {
 
         page = pidToPage.get(pid);
 
+        mark++;
+        leastUsedPage.put(pid, mark);
+
         if (page != null) {
             return page;
-        } else{
+        }
+        else{
             page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
         }
         if (pidToPage.size() > numPages){
             // need to implement a eviction later on
-            throw new DbException("There is insufficient space in the buffer pool.");
+//            throw new DbException("There is insufficient space in the buffer pool.");
+            evictPage();
         }
 
         pidToPage.put(pid, page);
@@ -146,14 +161,14 @@ public class BufferPool {
 
     /**
      * Add a tuple to the specified table on behalf of transaction tid.  Will
-     * acquire a write lock on the page the tuple is added to and any other 
-     * pages that are updated (Lock acquisition is not needed for lab2). 
+     * acquire a write lock on the page the tuple is added to and any other
+     * pages that are updated (Lock acquisition is not needed for lab2).
      * May block if the lock(s) cannot be acquired.
-     * 
+     *
      * Marks any pages that were dirtied by the operation as dirty by calling
-     * their markDirty bit, and adds versions of any pages that have 
-     * been dirtied to the cache (replacing any existing versions of those pages) so 
-     * that future requests see up-to-date pages. 
+     * their markDirty bit, and adds versions of any pages that have
+     * been dirtied to the cache (replacing any existing versions of those pages) so
+     * that future requests see up-to-date pages.
      *
      * @param tid the transaction adding the tuple
      * @param tableId the table to add the tuple to
@@ -195,9 +210,9 @@ public class BufferPool {
      * other pages that are updated. May block if the lock(s) cannot be acquired.
      *
      * Marks any pages that were dirtied by the operation as dirty by calling
-     * their markDirty bit, and adds versions of any pages that have 
-     * been dirtied to the cache (replacing any existing versions of those pages) so 
-     * that future requests see up-to-date pages. 
+     * their markDirty bit, and adds versions of any pages that have
+     * been dirtied to the cache (replacing any existing versions of those pages) so
+     * that future requests see up-to-date pages.
      *
      * @param tid the transaction deleting the tuple.
      * @param t the tuple to delete
@@ -239,7 +254,7 @@ public class BufferPool {
         Needed by the recovery manager to ensure that the
         buffer pool doesn't keep a rolled back page in its
         cache.
-        
+
         Also used by B+ tree files to ensure that deleted pages
         are removed from the cache so they can be reused safely
     */
@@ -257,9 +272,9 @@ public class BufferPool {
         // not necessary for lab1
         DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
         Page page = pidToPage.get(pid);
-        TransactionId dirtier = page.isDirty();
-        if (dirtier != null) {
-            Database.getLogFile().logWrite(dirtier, page.getBeforeImage(), page);
+        TransactionId dirtyId = page.isDirty();
+        if (dirtyId != null) {
+            Database.getLogFile().logWrite(dirtyId, page.getBeforeImage(), page);
             Database.getLogFile().force();
             file.writePage(page);
             page.markDirty(false, null);
@@ -280,30 +295,25 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
-//        if (pidToPage.size() != 0) {
-//            throw new DbException("evict must meet condition : not more slots");
-//        }
-//        Page leastRecentlyUsedPage = null;
-//        int leastTimestamp = timestamp;
-//        for (Page page : Pages) {
-//            if (page.isDirty() != null) {
-//                continue;
-//            }
-//            if (leastTimestamp > latestUsedTimestamp.get(page.getId())) {
-//                leastRecentlyUsedPage = page;
-//                leastTimestamp = latestUsedTimestamp.get(page.getId());
-//            }
-//        }
-//        try {
-//            flushPage(leastRecentlyUsedPage.getId());
-//        } catch (Exception e) {
-//            throw new DbException("flush page failed.");
-//        }
-//        int idx = pageIdToCachedIndex.get(leastRecentlyUsedPage.getId());
-//        idlePagePoolIndex.add(idx);
-//        pagePool[idx] = null;
-//        pageIdToCachedIndex.remove(leastRecentlyUsedPage.getId());
-//        latestUsedTimestamp.remove(leastRecentlyUsedPage.getId());
+
+        Iterator<Entry<PageId, Page>> iter = pidToPage.entrySet().iterator();
+
+        while (pidToPage.size() >= numPages && iter.hasNext()) {
+            Entry<PageId, Page> next = iter.next();
+            PageId pid = next.getKey();
+            Page p = next.getValue();
+
+            // never evict dirty pages.
+            if (p.isDirty() != null) {
+                continue;
+            }
+            pidToPage.remove(pid);
+        }
+
+        if (pidToPage.size() >= numPages) {
+            throw new DbException("Running out buffer pool.");
+        }
+
     }
 
 }
