@@ -83,12 +83,7 @@ public class HeapFile implements DbFile {
 
         try {
             byte[] bytes = HeapPage.createEmptyPageData(); // all 0
-//
-//            // When page is full
-            if (pid.getPageNumber() == numPages){
-                Page p = new HeapPage((HeapPageId)pid, bytes);
-                writePage(p);
-            }
+
             int accessFrom = pid.getPageNumber() * BufferPool.getPageSize();
             // use randomaccessfile to access the file can access the file from the middle
             // reference: https://javarevisited.blogspot.com/2015/02/randomaccessfile-example-in-java-read-write-String.html
@@ -97,6 +92,8 @@ public class HeapFile implements DbFile {
             reader.seek(accessFrom);
             reader.read(bytes);
             reader.close();
+
+            // When page is full
             return new HeapPage((HeapPageId) pid, bytes);
         } catch (IOException e) {
             throw new IllegalArgumentException();
