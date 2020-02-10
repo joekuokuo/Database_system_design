@@ -17,7 +17,7 @@ public class HeapFile implements DbFile {
 
     private final File file;
     private final TupleDesc td;
-    private final int numPages;
+    private int numPages;
     private final int tableId;
     final int pageSize = BufferPool.getPageSize();
 
@@ -33,7 +33,10 @@ public class HeapFile implements DbFile {
 
         this.file = f;
         this.td = td;
-        this.numPages = (int)((file.length() + pageSize - 1)/ pageSize);
+//        this.numPages = (int)((file.length() + pageSize - 1)/ pageSize);
+        this.numPages = (int)(file.length()/ pageSize);
+//
+
 //        this.numPages = (int) file.length() / BufferPool.getPageSize();
         this.tableId = file.getAbsoluteFile().hashCode();
     }
@@ -80,8 +83,8 @@ public class HeapFile implements DbFile {
 
         try {
             byte[] bytes = HeapPage.createEmptyPageData(); // all 0
-
-            // When page is full
+//
+//            // When page is full
             if (pid.getPageNumber() == numPages){
                 Page p = new HeapPage((HeapPageId)pid, bytes);
                 writePage(p);
@@ -105,11 +108,35 @@ public class HeapFile implements DbFile {
     public void writePage(Page page) throws IOException {
         // some code goes here
         // Lab2 implementation
-        RandomAccessFile randomAccessFile;
-        randomAccessFile = new RandomAccessFile(file, "rw");
-        randomAccessFile.seek(BufferPool.getPageSize() * page.getId().getPageNumber());
-        randomAccessFile.write(page.getPageData());
-        randomAccessFile.close();
+//        int numTuples = (BufferPool.getPageSize()*8) / (tdSize * 8 + 1);
+//        int headerSize = (int) Math.ceil(numTuples / 8.0);
+//        byte[] empty = new byte[numTuples * 8 + headerSize];
+//        page.getPageData() =
+        try{
+//            boolean isEmplty = true;
+//            int count0 = 0;
+//            byte[] empty = new byte[page.getPageData().length];
+//            byte[] dum = page.getPageData();
+//            for (int i = 0; i < page.getPageData().length; i++){
+//                if (page.getPageData()[i] == 0){
+//                    count0++;
+//                }
+//            }
+//            if (count0 == page.getPageData().length){
+//                return;
+//            }
+//            if ((page.getPageData()|empty) == 0){
+//                return;
+//            }
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            randomAccessFile.seek(BufferPool.getPageSize() * page.getId().getPageNumber());
+            randomAccessFile.write(page.getPageData());
+            randomAccessFile.close();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -124,9 +151,36 @@ public class HeapFile implements DbFile {
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        return null;
+        // Lab2:
+        ArrayList<Page> changePages = new ArrayList<>();
 
-        // not necessary for lab1
+//        int i = 0;
+        boolean pageFull = true;
+        for (int i = 0; i < numPages(); ++i) {
+            PageId pid = new HeapPageId(getId(), i);
+            HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_ONLY);
+
+            if (page.getNumEmptySlots() > 0) {
+                page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+                page.insertTuple(t);
+                changePages.add(page);
+                pageFull = false;
+            }
+        }
+//        System.out.println(pageSize); // 4096
+//        if (numPages == 0 || pageFull) {
+        if(changePages.size() == 0){
+            //文件里含的页为0，所以需要创建一个page
+            PageId pageId = new HeapPageId(getId(), numPages());
+            HeapPage newPage = new HeapPage((HeapPageId)pageId, new byte[BufferPool.getPageSize()]);
+            newPage.insertTuple(t);
+            newPage.markDirty(true, tid);
+            writePage(newPage);
+            changePages.add(newPage);
+            numPages++;
+        }
+        return changePages;
+
     }
 
     // see DbFile.java for javadocs

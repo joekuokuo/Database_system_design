@@ -1,7 +1,9 @@
 package simpledb;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -160,7 +162,31 @@ public class BufferPool {
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        // not necessary for lab1
+        // lab2
+        try{
+            ArrayList<Page> changedPages;
+            DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
+            HeapFile hf = (HeapFile)dbFile;
+            changedPages = hf.insertTuple(tid, t);
+            //iterate through affectedPages and markDirty
+            //also update cached pages
+            for (Page page : changedPages) {
+                page.markDirty(true,tid);
+                pidToPage.put(page.getId(), page);
+            }
+        }
+        catch (DbException e){
+
+            e.printStackTrace();
+        }
+        catch (TransactionAbortedException e){
+            e.printStackTrace();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+
     }
 
     /**
@@ -176,10 +202,24 @@ public class BufferPool {
      * @param tid the transaction deleting the tuple.
      * @param t the tuple to delete
      */
-    public  void deleteTuple(TransactionId tid, Tuple t)
+    public void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        // not necessary for lab1
+        // lab2
+        DbFile f = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+        try {
+            ArrayList<Page> pages = f.deleteTuple(tid, t);
+            for (Page page : pages) {
+                page.markDirty(true, tid);
+            }
+        }
+        catch (IOException e) {
+            throw new IOException("Delete failed.");
+        }
+        catch (DbException e) {
+            throw new DbException("Delete failed.");
+        }
+
     }
 
     /**
@@ -190,7 +230,9 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+        for (Page p : pidToPage.values()) {
+            flushPage(p.getId());
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -213,6 +255,15 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+        DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
+        Page page = pidToPage.get(pid);
+        TransactionId dirtier = page.isDirty();
+        if (dirtier != null) {
+            Database.getLogFile().logWrite(dirtier, page.getBeforeImage(), page);
+            Database.getLogFile().force();
+            file.writePage(page);
+            page.markDirty(false, null);
+        }
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -229,6 +280,30 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+//        if (pidToPage.size() != 0) {
+//            throw new DbException("evict must meet condition : not more slots");
+//        }
+//        Page leastRecentlyUsedPage = null;
+//        int leastTimestamp = timestamp;
+//        for (Page page : Pages) {
+//            if (page.isDirty() != null) {
+//                continue;
+//            }
+//            if (leastTimestamp > latestUsedTimestamp.get(page.getId())) {
+//                leastRecentlyUsedPage = page;
+//                leastTimestamp = latestUsedTimestamp.get(page.getId());
+//            }
+//        }
+//        try {
+//            flushPage(leastRecentlyUsedPage.getId());
+//        } catch (Exception e) {
+//            throw new DbException("flush page failed.");
+//        }
+//        int idx = pageIdToCachedIndex.get(leastRecentlyUsedPage.getId());
+//        idlePagePoolIndex.add(idx);
+//        pagePool[idx] = null;
+//        pageIdToCachedIndex.remove(leastRecentlyUsedPage.getId());
+//        latestUsedTimestamp.remove(leastRecentlyUsedPage.getId());
     }
 
 }

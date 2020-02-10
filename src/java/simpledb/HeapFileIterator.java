@@ -24,7 +24,7 @@ public class HeapFileIterator implements DbFileIterator{
 
     @Override
     public boolean hasNext() throws DbException, TransactionAbortedException {
-        if (tupleIterator == null || pgNo >= hf.numPages())
+        if (tupleIterator == null )
             return false;
         // still need to check every page later on
         while (!tupleIterator.hasNext()){
