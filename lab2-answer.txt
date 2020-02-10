@@ -44,4 +44,15 @@ correspond tuple in tuple array to null and also mark the slot unused.
 
 HeapFile part:
 WritePage is also implemented by RandomAccessFile class. By seeking the access point from pagesize * current page number, and write the page
-data at that position.
+data at that position. Insert a tuple by getting a heap page from TransactionId and use the insert tuple method in heapPage to insert the
+tuple to the page and also record this page in a list for later return. Deleting works similarly. By using the TransactionId and tuple we could
+locate the page we want to delete a specific tuple, and use the delete tuple method in heapPage to delete the tuple. Also mark the page as dirty
+page.
+
+Eviction policy:
+Very simple. Remove a page in the bufferpool which is not dirty.
+
+
+Summary:
+A few tests still doesn't pass. The code still need to be modify for later use. In exercise 7, the first query pass in 0.48sec, but the
+rest two queries still cannot pass regardless how many time it use.
