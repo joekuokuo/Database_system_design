@@ -167,7 +167,6 @@ public class HeapFile implements DbFile {
 //        System.out.println(pageSize); // 4096
 //        if (numPages == 0 || pageFull) {
         if(changePages.size() == 0){
-            //文件里含的页为0，所以需要创建一个page
             PageId pageId = new HeapPageId(getId(), numPages());
             HeapPage newPage = new HeapPage((HeapPageId)pageId, new byte[BufferPool.getPageSize()]);
             newPage.insertTuple(t);

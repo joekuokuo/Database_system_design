@@ -37,4 +37,11 @@ to accumulate the value and the aggregate value which is the previous value, and
 when averaging it. When maximum and minimum, we simply can use Math.max and Math.min to update the value of group by. While count,
 we only need to use the count of group by as we always keeping track of.
 
+HeapPage part:
+First, check whether there are the empty slots. Second, check the tuple descriptor is matched. Last, loop through all the slots to check
+which one is still unused, and put the tuple into that slot and break the loop. Do the same check for delete, and simply assign the
+correspond tuple in tuple array to null and also mark the slot unused.
 
+HeapFile part:
+WritePage is also implemented by RandomAccessFile class. By seeking the access point from pagesize * current page number, and write the page
+data at that position.
