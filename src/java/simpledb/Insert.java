@@ -80,11 +80,12 @@ public class Insert extends Operator {
             return null;
         }
         int count = 0;
+        called = true;
         while(child.hasNext()){
             Tuple childTuple = child.next();
             count++;
             try{
-                Database.getBufferPool().insertTuple(tid, tableId,childTuple);
+                Database.getBufferPool().insertTuple(tid, tableId, childTuple);
             }
             catch (IOException e){
                 throw new DbException("Insertion failed.");

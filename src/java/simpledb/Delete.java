@@ -77,6 +77,7 @@ public class Delete extends Operator {
             }
             Tuple tuple = new Tuple(getTupleDesc());
             tuple.setField(0, new IntField(deleteCount));
+            return tuple;
         }
         catch (DbException e){
             e.printStackTrace();
