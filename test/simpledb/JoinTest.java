@@ -72,8 +72,6 @@ public class JoinTest extends SimpleDbTestBase {
     Join op = new Join(pred, scan1, scan2);
     op.open();
 
-    Join op1 = op;
-
     while (op.hasNext()) {
       assertNotNull(op.next());
     }

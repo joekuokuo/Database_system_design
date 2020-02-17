@@ -67,11 +67,8 @@ public class HeapFileWriteTest extends TestUtil.CreateHeapFile {
         // next HeapPage's iterator and checking if it's empty (hasNext()), making
         // sure it moves onto the next page until hitting the final page.
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 0), empty));
-        System.out.println(smallFile.numPages());
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 1), empty));
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 2), full));
-        System.out.println(smallFile.numPages());
-
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 3), empty));
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 4), full));
         DbFileIterator it = smallFile.iterator(tid);
