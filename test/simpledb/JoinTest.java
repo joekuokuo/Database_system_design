@@ -71,6 +71,9 @@ public class JoinTest extends SimpleDbTestBase {
     JoinPredicate pred = new JoinPredicate(0, Predicate.Op.EQUALS, 0);
     Join op = new Join(pred, scan1, scan2);
     op.open();
+
+    Join op1 = op;
+
     while (op.hasNext()) {
       assertNotNull(op.next());
     }
@@ -91,6 +94,8 @@ public class JoinTest extends SimpleDbTestBase {
     Join op = new Join(pred, scan1, scan2);
     op.open();
     gtJoin.open();
+//    System.out.println(gtJoin.toString());
+//    System.out.println(op.getTupleDesc().toString());
     TestUtil.matchAllTuples(gtJoin, op);
   }
 

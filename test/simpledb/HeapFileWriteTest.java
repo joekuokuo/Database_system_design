@@ -32,13 +32,11 @@ public class HeapFileWriteTest extends TestUtil.CreateHeapFile {
             empty.insertTuple(tid, Utility.getHeapTuple(i, 2));
             assertEquals(1, empty.numPages());
         }
-
         // the next 512 additions should live on a new page
         for (int i = 0; i < 504; ++i) {
             empty.insertTuple(tid, Utility.getHeapTuple(i, 2));
             assertEquals(2, empty.numPages());
         }
-
         // and one more, just for fun...
         empty.insertTuple(tid, Utility.getHeapTuple(0, 2));
         assertEquals(3, empty.numPages());
@@ -69,8 +67,11 @@ public class HeapFileWriteTest extends TestUtil.CreateHeapFile {
         // next HeapPage's iterator and checking if it's empty (hasNext()), making
         // sure it moves onto the next page until hitting the final page.
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 0), empty));
+        System.out.println(smallFile.numPages());
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 1), empty));
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 2), full));
+        System.out.println(smallFile.numPages());
+
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 3), empty));
         smallFile.writePage(new HeapPage(new HeapPageId(tableId, 4), full));
         DbFileIterator it = smallFile.iterator(tid);

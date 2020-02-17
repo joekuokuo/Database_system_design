@@ -112,7 +112,9 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
         int deleted = 0;
         while (tuples.size() > 0) {
             page.deleteTuple(tuples.removeFirst());
+//            int k1 = page.getNumEmptySlots();
             page.deleteTuple(tuples.removeLast());
+//            int k2 = page.getNumEmptySlots();
             deleted += 2;
             assertEquals(free + deleted, page.getNumEmptySlots());
         }
