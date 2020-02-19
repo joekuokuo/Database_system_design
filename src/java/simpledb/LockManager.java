@@ -21,11 +21,11 @@ public class LockManager {
     public synchronized boolean acquireSharedLock(TransactionId tid, PageId pid){
         ArrayList<Lock> lockList = (ArrayList<Lock>)pageLock.get(pid);
         if (lockList != null && lockList.size() != 0){
+            // if only one lock in the list
             if(lockList.size() == 1){
                 Lock lock = lockList.get(0);
                 if(lock.tid != tid){
 //              if(lock.tid == tid){
-
 //                    return lock.lockType == Locks.SharedLock || lockPage(tid, pid, Permissions.READ_ONLY);
                     return lock.lockType == Locks.SharedLock ? lockPage(tid, pid, Permissions.READ_ONLY) : block(tid, pid);
 
@@ -64,11 +64,13 @@ public class LockManager {
         ArrayList<Lock> lockList = (ArrayList)pageLock.get(pid);
 
         if (lockList != null && lockList.size() != 0){
+            // if only one lock in the list
             if(lockList.size() == 1){
                 Lock lock = lockList.get(0);
                 return lock.tid == tid? lock.lockType == Locks.ExclusiveLock || lockPage(tid, pid, Permissions.READ_WRITE) : block(tid, pid);
             }
 
+            // if only two lock in the list
             else if (lockList.size() == 2){
                 for (Lock lock : lockList){
                     if(lock.tid == tid && lock.lockType == Locks.ExclusiveLock){
