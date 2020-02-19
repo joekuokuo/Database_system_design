@@ -8,28 +8,31 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LockManager {
 
 
-    int sharedLock;
-    Map<PageId, List<Lock>> pageLock;
-
-    Map<TransactionId, PageId> blockMap;
-
-
+    private Map<PageId, List<Lock>> pageLock;
+    private Map<TransactionId, PageId> blockMap;
 
     public LockManager() {
+        // Avoid concurrent issues
         pageLock = new ConcurrentHashMap<>();
-
+        blockMap = new ConcurrentHashMap<>();
     }
+
     // Read Lock
     public synchronized boolean acquireSharedLock(TransactionId tid, PageId pid){
-        ArrayList<Lock> lockList = (ArrayList)pageLock.get(pid);
+        ArrayList<Lock> lockList = (ArrayList<Lock>)pageLock.get(pid);
         if (lockList != null && lockList.size() != 0){
             if(lockList.size() == 1){
                 Lock lock = lockList.get(0);
-                if(lock.tid == tid){
-                    return lock.lockType == Locks.SharedLock || lockPage(tid, pid, Permissions.READ_ONLY);
+                if(lock.tid != tid){
+//              if(lock.tid == tid){
+
+//                    return lock.lockType == Locks.SharedLock || lockPage(tid, pid, Permissions.READ_ONLY);
+                    return lock.lockType == Locks.SharedLock ? lockPage(tid, pid, Permissions.READ_ONLY) : block(tid, pid);
+
                 }
                 else {
-                    return lock.lockType == Locks.SharedLock ? lockPage(tid, pid, Permissions.READ_ONLY) : block(tid, pid);
+                    return true;
+//                    return lock.lockType == Locks.SharedLock ? lockPage(tid, pid, Permissions.READ_ONLY) : block(tid, pid);
                 }
             }
 
@@ -37,7 +40,6 @@ public class LockManager {
                 for (Lock lock : lockList){
                     if(lock.lockType == Locks.ExclusiveLock){
                         return lock.tid.equals(tid) || block(tid, pid);
-
                     }
                     else if (lock.tid == tid){
                         return true;
@@ -47,6 +49,8 @@ public class LockManager {
             lockPage(tid, pid, Permissions.READ_ONLY);
 
         }
+
+        // No lock case
         else {
             lockPage(tid, pid, Permissions.READ_ONLY);
         }
@@ -54,55 +58,73 @@ public class LockManager {
         return false;
     }
 
-    private boolean block(TransactionId tid, PageId pid){
+    // Write Lock
+    public synchronized boolean acquireExclusiveLock(TransactionId tid, PageId pid){
+
+        ArrayList<Lock> lockList = (ArrayList)pageLock.get(pid);
+
+        if (lockList != null && lockList.size() != 0){
+            if(lockList.size() == 1){
+                Lock lock = lockList.get(0);
+                return lock.tid == tid? lock.lockType == Locks.ExclusiveLock || lockPage(tid, pid, Permissions.READ_WRITE) : block(tid, pid);
+            }
+
+            else if (lockList.size() == 2){
+                for (Lock lock : lockList){
+                    if(lock.tid == tid && lock.lockType == Locks.ExclusiveLock){
+                        return true;
+                    }
+                }
+            }
+
+            else{
+                return block(tid, pid);
+            }
+        }
+
+        // No lock case
+        else {
+            lockPage(tid, pid, Permissions.READ_WRITE);
+        }
+
+        return false;
+
+    }
+    private synchronized boolean block(TransactionId tid, PageId pid){
+        // block through TransactionId & PageId
         blockMap.put(tid, pid);
         return false;
     }
 
 
-    private boolean lockPage(TransactionId tid, PageId pid, Permissions perm){
+    private synchronized boolean lockPage(TransactionId tid, PageId pid, Permissions perm){
+        Lock newlock = new Lock(tid, perm);
+        ArrayList<Lock> lockList = (ArrayList)pageLock.get(pid);
+        if(lockList == null){
+            lockList = new ArrayList<>();
+        }
+        lockList.add(newlock);
+        pageLock.put(pid, lockList);
 
+        if (blockMap.containsKey(tid)){
+            blockMap.remove(tid);
+        }
         return true;
     }
 
-    public synchronized void holdSharedLock(){
+    public synchronized boolean unlock(TransactionId tid, PageId pid){
+        ArrayList<Lock> newlockList = (ArrayList)pageLock.get(pid);
 
-    }
-
-
-    public synchronized boolean releaseSharedLock(){
-
-        return true;
-    }
-
-    public synchronized boolean getSharedLock(){
-
-        return false;
-    }
-
-
-
-
-    // Write Lock
-    public synchronized boolean acquireExclusiveLock(TransactionId tid, PageId pid){
-
-
-
-        return true;
-
-    }
-    public synchronized void holdExclusiveLock(){
-
-    }
-
-
-    public synchronized boolean releaseExclusiveLock(){
-
-        return true;
-    }
-
-    public synchronized boolean getLock(){
-
+        if(newlockList == null || newlockList.size() == 0){
+            return false;
+        }
+        for (Lock lock: newlockList){
+            if(lock.tid == tid){
+                newlockList.remove(lock);
+                pageLock.put(pid, newlockList);
+                return true;
+            }
+        }
         return false;
     }
 
@@ -117,18 +139,22 @@ public class LockManager {
 
         public Lock(TransactionId tid, Permissions perm){
             this.tid = tid;
-            lockType = Locks.NoLock;
+//            lockType = Locks.NoLock;
+            if (perm == Permissions.READ_ONLY){
+                lockType = Locks.SharedLock;
 
+            }
+            else {
+                lockType = Locks.ExclusiveLock;
+            }
         }
 
-        public TransactionId getTid(){
-            return tid;
-        }
-
-        public Locks getLock(){
-            return lockType;
-        }
-
-
+//        public TransactionId getTid(){
+//            return tid;
+//        }
+//
+//        public Locks getLock(){
+//            return lockType;
+//        }
     }
 }

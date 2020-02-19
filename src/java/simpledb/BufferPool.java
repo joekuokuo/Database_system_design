@@ -44,6 +44,11 @@ public class BufferPool {
     // For eviction part.
     private HashMap<PageId, Integer> leastUsedPage;
     private int mark = 0;
+
+    // LockManager
+    private LockManager lockManager;
+
+    private final int SLEEP_INTERVAL;
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -57,7 +62,8 @@ public class BufferPool {
         pidToPage = new ConcurrentHashMap<>();
 //        permToPage = new HashMap<>();
         leastUsedPage = new HashMap<>();
-
+        lockManager = new LockManager();
+        SLEEP_INTERVAL = 500;
     }
 
     public static int getPageSize() {
@@ -89,15 +95,38 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
+
+
+
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException {
+            throws TransactionAbortedException, DbException {
         // some code goes here
-        Page page;
 
-        page = pidToPage.get(pid);
+        Page page = pidToPage.get(pid);
 
-        mark++;
-        leastUsedPage.put(pid, mark);
+        boolean res;
+        if (perm == Permissions.READ_ONLY){
+            res = lockManager.acquireSharedLock(tid, pid);
+        }
+        else{
+            res = lockManager.acquireExclusiveLock(tid, pid);
+        }
+
+        while (!res) {
+//            Thread.sleep(SLEEP_INTERVAL); Not sleeping well...fail
+            if (perm == Permissions.READ_ONLY){
+                res = lockManager.acquireSharedLock(tid, pid);
+            }
+            else {
+                res = lockManager.acquireExclusiveLock(tid, pid);
+            }
+        }
+
+        if (pidToPage.size() > numPages){
+            // need to implement a eviction later on
+//            throw new DbException("There is insufficient space in the buffer pool.");
+            evictPage();
+        }
 
         if (page != null) {
             return page;
@@ -105,11 +134,7 @@ public class BufferPool {
         else{
             page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
         }
-        if (pidToPage.size() > numPages){
-            // need to implement a eviction later on
-//            throw new DbException("There is insufficient space in the buffer pool.");
-            evictPage();
-        }
+
 
         pidToPage.put(pid, page);
         return page;
@@ -127,6 +152,10 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
+        // Lab3
+        if(! lockManager.unlock(tid, pid)){
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
@@ -143,7 +172,9 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for lab1|lab2
-        return false;
+        // Lab3
+
+        return lockManager.unlock(tid, p);
     }
 
     /**
@@ -183,10 +214,10 @@ public class BufferPool {
             DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
             HeapFile hf = (HeapFile)dbFile;
             changedPages = hf.insertTuple(tid, t);
+
             //iterate through affectedPages and markDirty
             //also update cached pages
             for (Page page : changedPages) {
-                page.markDirty(true,tid);
                 pidToPage.put(page.getId(), page);
             }
         }

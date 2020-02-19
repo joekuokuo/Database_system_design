@@ -17,7 +17,7 @@ public class HeapFile implements DbFile {
 
     private final File file;
     private final TupleDesc td;
-    private int numPages;
+//    private int numPages;
     private final int tableId;
     final int pageSize = BufferPool.getPageSize();
 
@@ -33,8 +33,7 @@ public class HeapFile implements DbFile {
 
         this.file = f;
         this.td = td;
-//        this.numPages = (int)((file.length() + pageSize - 1)/ pageSize);
-        this.numPages = (int)(file.length()/ pageSize);
+//        this.numPages = (int)(file.length()/ pageSize);
 //
 
 //        this.numPages = (int) file.length() / BufferPool.getPageSize();
@@ -141,7 +140,8 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return numPages;
+//        return numPages;
+        return (int)(file.length()/ pageSize);
     }
 
     // see DbFile.java for javadocs
@@ -150,9 +150,8 @@ public class HeapFile implements DbFile {
         // some code goes here
         // Lab2:
         ArrayList<Page> changePages = new ArrayList<>();
-
 //        int i = 0;
-        boolean pageFull = true;
+//        boolean pageFull = true;
         for (int i = 0; i < numPages(); ++i) {
             PageId pid = new HeapPageId(getId(), i);
             HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_ONLY);
@@ -161,7 +160,7 @@ public class HeapFile implements DbFile {
                 page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
                 page.insertTuple(t);
                 changePages.add(page);
-                pageFull = false;
+//                pageFull = false;
             }
         }
 //        System.out.println(pageSize); // 4096
@@ -173,7 +172,7 @@ public class HeapFile implements DbFile {
             newPage.markDirty(true, tid);
             writePage(newPage);
             changePages.add(newPage);
-            numPages++;
+//            numPages++;
         }
         return changePages;
 
@@ -192,7 +191,7 @@ public class HeapFile implements DbFile {
         page.deleteTuple(t);
         page.markDirty(true, tid);
 
-        return new ArrayList<Page>(Arrays.asList(page));
+        return new ArrayList<Page>(List.of(page));
 
     }
 
