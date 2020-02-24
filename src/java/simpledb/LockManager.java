@@ -61,13 +61,13 @@ public class LockManager {
     // Write Lock
     public synchronized boolean acquireExclusiveLock(TransactionId tid, PageId pid){
 
-        ArrayList<Lock> lockList = (ArrayList)pageLock.get(pid);
+        ArrayList<Lock> lockList = (ArrayList<Lock>)pageLock.get(pid);
 
         if (lockList != null && lockList.size() != 0){
             // if only one lock in the list
             if(lockList.size() == 1){
                 Lock lock = lockList.get(0);
-                return lock.tid == tid? lock.lockType == Locks.ExclusiveLock || lockPage(tid, pid, Permissions.READ_WRITE) : block(tid, pid);
+                return lock.tid == tid ? lock.lockType == Locks.ExclusiveLock || lockPage(tid, pid, Permissions.READ_WRITE) : block(tid, pid);
             }
 
             // if only two lock in the list
@@ -101,7 +101,7 @@ public class LockManager {
 
     private synchronized boolean lockPage(TransactionId tid, PageId pid, Permissions perm){
         Lock newlock = new Lock(tid, perm);
-        ArrayList<Lock> lockList = (ArrayList)pageLock.get(pid);
+        ArrayList<Lock> lockList = (ArrayList<Lock>)pageLock.get(pid);
         if(lockList == null){
             lockList = new ArrayList<>();
         }
@@ -115,11 +115,13 @@ public class LockManager {
     }
 
     public synchronized boolean unlock(TransactionId tid, PageId pid){
-        ArrayList<Lock> newlockList = (ArrayList)pageLock.get(pid);
+        // check on a specific pageId
+        ArrayList<Lock> newlockList = (ArrayList<Lock>)pageLock.get(pid);
 
         if(newlockList == null || newlockList.size() == 0){
             return false;
         }
+        // go through all the locks in a specific page to check whether a specific transaction is lock or not.
         for (Lock lock: newlockList){
             if(lock.tid == tid){
                 newlockList.remove(lock);
@@ -130,7 +132,41 @@ public class LockManager {
         return false;
     }
 
+    // different with unlock by not actually remove locks in lockList and update the pageLock.
+    public synchronized boolean checklockStatus(TransactionId tid, PageId pid) {
+        // check on a specific pageId
+        ArrayList<Lock> lockList = (ArrayList<Lock>)pageLock.get(pid);
 
+        if(lockList == null || lockList.size() == 0){
+            return false;
+        }
+
+        // go through all the locks in a specific page to check whether a specific transaction is lock or not.
+        for (Lock lock: lockList){
+            if(lock.tid == tid){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public synchronized void releaseAllTransactionLocks(TransactionId tid){
+        ArrayList<PageId> pids = new ArrayList<>();
+        for (Map.Entry<PageId, List<Lock>> entry : pageLock.entrySet()){
+            for (Lock lock : entry.getValue()){
+                if(lock.tid == tid){
+                    pids.add(entry.getKey());
+                    // ASK TA: Why I cannot do this? ConcurrentModificationException
+//                    unlock(tid, entry.getKey());
+                }
+            }
+        }
+
+        for (PageId pid : pids) {
+            unlock(tid, pid);
+        }
+
+    }
     private enum Locks{
         NoLock, SharedLock, ExclusiveLock;
     }

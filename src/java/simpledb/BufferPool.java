@@ -102,7 +102,7 @@ public class BufferPool {
             throws TransactionAbortedException, DbException {
         // some code goes here
 
-        Page page = pidToPage.get(pid);
+        HeapPage page = (HeapPage) pidToPage.get(pid);
 
         boolean res;
         if (perm == Permissions.READ_ONLY){
@@ -113,17 +113,23 @@ public class BufferPool {
         }
 
         while (!res) {
-//            Thread.sleep(SLEEP_INTERVAL); Not sleeping well...fail
-            if (perm == Permissions.READ_ONLY){
-                res = lockManager.acquireSharedLock(tid, pid);
-            }
-            else {
-                res = lockManager.acquireExclusiveLock(tid, pid);
-            }
+//            try{
+//                sleep...
+//            }
+//            catch (InterruptedException e){
+////                throw new InterruptedException("Thread interrupted");
+//                System.out.println("Thread interrupted.");
+//            }
+//                Thread.sleep(SLEEP_INTERVAL); // Not sleeping well...fail
+                if (perm == Permissions.READ_ONLY){
+                    res = lockManager.acquireSharedLock(tid, pid);
+                }
+                else {
+                    res = lockManager.acquireExclusiveLock(tid, pid);
+                }
         }
 
         if (pidToPage.size() > numPages){
-            // need to implement a eviction later on
 //            throw new DbException("There is insufficient space in the buffer pool.");
             evictPage();
         }
@@ -132,9 +138,8 @@ public class BufferPool {
             return page;
         }
         else{
-            page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+            page = (HeapPage) Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
         }
-
 
         pidToPage.put(pid, page);
         return page;
@@ -153,6 +158,8 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1|lab2
         // Lab3
+
+        // Unlock the page. If it's already unlocked, then throw IllegalArgumentException Error.
         if(! lockManager.unlock(tid, pid)){
             throw new IllegalArgumentException();
         }
@@ -166,6 +173,10 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        // lab3
+
+        // Assume it's going to commit.
+        transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
@@ -174,7 +185,7 @@ public class BufferPool {
         // not necessary for lab1|lab2
         // Lab3
 
-        return lockManager.unlock(tid, p);
+        return lockManager.checklockStatus(tid, p);
     }
 
     /**
@@ -188,6 +199,30 @@ public class BufferPool {
         throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+        // lab 3
+        // refer: https://www.geeksforgeeks.org/iterate-map-java/
+
+        // iterate through the whole map.
+        Iterator<Entry<PageId, Page>> nextPage = pidToPage.entrySet().iterator();
+        while (nextPage.hasNext()){
+            Entry<PageId,Page> next = nextPage.next();
+            PageId pid = next.getKey();
+            Page page = next.getValue();
+
+            if(tid.equals(page.isDirty())){
+                // Commit
+                if(commit){
+                    flushPage(pid);
+                    page.markDirty(false, null);
+                    page.setBeforeImage();
+                }
+                // Abort
+                else {
+                    pidToPage.put(pid, page.getBeforeImage());
+                }
+            }
+        }
+        lockManager.releaseAllTransactionLocks(tid);
     }
 
     /**
@@ -298,11 +333,11 @@ public class BufferPool {
      * Flushes a certain page to disk
      * @param pid an ID indicating the page to flush
      */
-    private synchronized  void flushPage(PageId pid) throws IOException {
+    private synchronized void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
         DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
-        Page page = pidToPage.get(pid);
+        HeapPage page = (HeapPage) pidToPage.get(pid);
         TransactionId dirtyId = page.isDirty();
         if (dirtyId != null) {
             Database.getLogFile().logWrite(dirtyId, page.getBeforeImage(), page);
@@ -314,30 +349,33 @@ public class BufferPool {
 
     /** Write all pages of the specified transaction to disk.
      */
-    public synchronized  void flushPages(TransactionId tid) throws IOException {
+    public synchronized void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+
+
     }
 
     /**
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-    private synchronized  void evictPage() throws DbException {
+    private synchronized void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
 
-        Iterator<Entry<PageId, Page>> iter = pidToPage.entrySet().iterator();
+        Iterator<Entry<PageId, Page>> it = pidToPage.entrySet().iterator();
 
-        while (pidToPage.size() >= numPages && iter.hasNext()) {
-            Entry<PageId, Page> next = iter.next();
+        while (pidToPage.size() >= numPages && it.hasNext()) {
+            Entry<PageId, Page> next = it.next();
             PageId pid = next.getKey();
-            Page p = next.getValue();
+            HeapPage p = (HeapPage)next.getValue();
 
             // never evict dirty pages.
             if (p.isDirty() != null) {
                 continue;
             }
+//            flushPage(pid);
             pidToPage.remove(pid);
         }
 
