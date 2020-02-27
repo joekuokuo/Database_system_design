@@ -1,0 +1,35 @@
+Lab3 write up
+In this lab3, a no-Steal, force
+transaction is implemented with strict two-phase locking. A new class LockManager is introduced also to keep track of which locks each transaction holds and that check to see if a lock should be granted to a transaction when it is requested.
+
+In LockManager class, two ConcurrentHashMap are created, one map stores pageId and a list of Locks it contains, the other map stores a TransactionId and a PageId to illustrate which transactionId is blocked on which page. The whole granted lock process is divided into two peaces. The lock is needed to be check by permission for either a read lock or a write lock. The check is performed in the BufferPool before getting a page. If it’s a read lock, the lock can be granted in some situation as below:
+
+If there is only one lock in the page:
+If the lock in a curtain page is by it’s own, then it’s granted, and lock the page with read permission.
+If the lock is not by it’s own, then we have to check either the lock is a read lock or a write lock. If it is a read lock, then it’s granted, and lock the page. If the lock is a write lock, then we need to make the transaction waited(blocked).
+
+If there are multiple locks in the page:
+If there is a write lock in the locks, then we need to check if the write lock is perform by this transactionId and grant it, or we will need to block this read lock.
+If there is a read lock by this transaction, then it’s also granted.
+If there is no tid lock on this page, then we can lock it.
+If there is no lock at all, then we can simply grant it and lock the page by this transaction.
+
+If a write lock need to be checked, the lock can be granted in some situation as below:
+
+If there are locks in a pageId:
+If there is only one lock in it, then check if the transaction is made by itself. If it’s made by itself and it’s also a write lock, then simply return true and no need to lock any page. If it’s made by itself and it’s a read lock, then lock the page with a write lock.
+
+If there are two locks on a page and if the transaction is made by itself and the lock is a write lock, then return true and no need to lock any page. Otherwise block this transaction. If the transaction is not made by itself then simply block it.
+
+If there is no lock at all, then lock the page with a write lock.
+
+To lock a page, we create a lock by a tid and permission supported by another class called Lock. This class will determine which lock should it be by its permission. The lock and the corresponding page will be put into the pageLock map. If the transaction is in the blockMap, it will be removed.
+
+To unlock a page, it’s like the reverse of lock a page. We update the pageLock map by putting an updated locked list into it.
+
+Most important of all, to detect a deadlock:
+We first get all the locks in different pages with a curtain transaction.
+
+
+
+
