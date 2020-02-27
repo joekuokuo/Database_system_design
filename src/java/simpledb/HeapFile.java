@@ -183,6 +183,7 @@ public class HeapFile implements DbFile {
         return new HeapFileIterator(tid, this);
 //        return null;
     }
-
 }
 
+
+// pass all the tests in lab3

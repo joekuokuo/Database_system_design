@@ -98,3 +98,5 @@ public class Delete extends Operator {
     }
 
 }
+
+// open() and fetchNext() modify for lab3, and pass all the tests in lab3

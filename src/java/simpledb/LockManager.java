@@ -1,4 +1,3 @@
-
 package simpledb;
 
 import java.util.ArrayList;
@@ -272,3 +271,5 @@ public class LockManager {
         }
     }
 }
+
+// lab3 pass all the tests
