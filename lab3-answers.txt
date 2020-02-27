@@ -28,8 +28,7 @@ To lock a page, we create a lock by a tid and permission supported by another cl
 To unlock a page, it’s like the reverse of lock a page. We update the pageLock map by putting an updated locked list into it.
 
 Most important of all, to detect a deadlock:
-We first get all the locks in different pages with a curtain transaction.
+We first get all the locks in different pages with a curtain transaction. If there is no lock on this page, it can be return false, since there are no transaction waiting for this page. Then we need to check every lock on this page if any. For each lock on this page, we first obtain its TransactionId. Exclude the TransactionId of itself, and check whether the this TransactionId is waiting for other pages. To check whether the TransactionId is waiting for other pages, we  need to get the blocked pageId by this TransactionId. For every pageId, if there is one in the list of locked page by this TransactionId, then we could return true.
 
-
-
-
+TransactionComplete():
+It’s implemented by iterate through all the pages in BufferPool, if commit is granted, then it will flush the PageId from the BufferPool, and mark this page dirty, and set this page as BeforeImage. If abort, then we simply put the previous version of the page back to the map by calling getBerforeImage(). Finally the LockManager will release all the locks corresponding to this TransactionId.
