@@ -292,14 +292,17 @@ public class BufferPool {
         // lab2
         DbFile f = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
         ArrayList<Page> pages = null;
+
         try {
             pages = f.deleteTuple(tid, t);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
+
         for (Page page : pages) {
-                page.markDirty(true, tid);
-            }
+            page.markDirty(true, tid);
+        }
 
     }
 

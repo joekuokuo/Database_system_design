@@ -32,3 +32,5 @@ We first get all the locks in different pages with a curtain transaction. If the
 
 TransactionComplete():
 It’s implemented by iterate through all the pages in BufferPool, if commit is granted, then it will flush the PageId from the BufferPool, and mark this page dirty, and set this page as BeforeImage. If abort, then we simply put the previous version of the page back to the map by calling getBerforeImage(). Finally the LockManager will release all the locks corresponding to this TransactionId.
+
+Finished.

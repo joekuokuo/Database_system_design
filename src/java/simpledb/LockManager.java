@@ -187,7 +187,7 @@ public class LockManager {
         for (Lock lock : whoseLock) {
             TransactionId lockHolder = lock.tid;
 
-            // if the lockHolder's tid is not the tid in whoseLock
+            // if the lockHolder's tid is not the tid in whoseLock, excluding itself
             if (!lockHolder.equals(tid)) {
 
                 // determine whether the lockHolder is waiting for pid or not.
