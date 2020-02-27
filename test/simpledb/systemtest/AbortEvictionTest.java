@@ -45,6 +45,12 @@ public class AbortEvictionTest extends SimpleDbTestBase {
             Tuple v = ss.next();
             int v0 = ((IntField)v.getField(0)).getValue();
             int v1 = ((IntField)v.getField(1)).getValue();
+
+            // debugging
+            System.out.print(v0);
+            System.out.println(v1);
+
+            //
             if (v0 == -42 && v1 == -43) {
                 assertFalse(found);
                 found = true;
@@ -60,9 +66,9 @@ public class AbortEvictionTest extends SimpleDbTestBase {
     @Test public void testDoNotEvictDirtyPages()
             throws IOException, DbException, TransactionAbortedException {
         // Allocate a file with ~10 pages of data
+//        HeapFile f = SystemTestUtil.createRandomHeapFile(2, 512, null, null);
         HeapFile f = SystemTestUtil.createRandomHeapFile(2, 512*10, null, null);
 
-//        HeapFile f = SystemTestUtil.createRandomHeapFile(2, 1, null, null);
         Database.resetBufferPool(2);
 
         // BEGIN TRANSACTION
@@ -85,6 +91,8 @@ public class AbortEvictionTest extends SimpleDbTestBase {
         assertFalse(found);
         t.commit();
     }
+
+
 
     /** Make test compatible with older version of ant. */
     public static junit.framework.Test suite() {
