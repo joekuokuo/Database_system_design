@@ -20,19 +20,16 @@ public class LockManager {
     // Read Lock
     public synchronized boolean acquireSharedLock(TransactionId tid, PageId pid){
         ArrayList<Lock> lockList = (ArrayList<Lock>)pageLock.get(pid);
+
         if (lockList != null && lockList.size() != 0){
             // if only one lock in the list
             if(lockList.size() == 1){
                 Lock lock = lockList.get(0);
                 if(lock.tid != tid){
-//              if(lock.tid == tid){
-//                    return lock.lockType == Locks.SharedLock || lockPage(tid, pid, Permissions.READ_ONLY);
                     return lock.lockType == Locks.SharedLock ? lockPage(tid, pid, Permissions.READ_ONLY) : block(tid, pid);
-
                 }
                 else {
                     return true;
-//                    return lock.lockType == Locks.SharedLock ? lockPage(tid, pid, Permissions.READ_ONLY) : block(tid, pid);
                 }
             }
 
@@ -46,16 +43,15 @@ public class LockManager {
                     }
                 }
             }
-            lockPage(tid, pid, Permissions.READ_ONLY);
+            return lockPage(tid, pid, Permissions.READ_ONLY);
 
         }
 
         // No lock case
         else {
-            lockPage(tid, pid, Permissions.READ_ONLY);
+            return lockPage(tid, pid, Permissions.READ_ONLY);
         }
 
-        return false;
     }
 
     // Write Lock
@@ -77,6 +73,8 @@ public class LockManager {
                         return true;
                     }
                 }
+
+                return block(tid, pid);
             }
 
             else{
@@ -86,10 +84,8 @@ public class LockManager {
 
         // No lock case
         else {
-            lockPage(tid, pid, Permissions.READ_WRITE);
+            return lockPage(tid, pid, Permissions.READ_WRITE);
         }
-
-        return false;
 
     }
     private synchronized boolean block(TransactionId tid, PageId pid){
@@ -167,6 +163,95 @@ public class LockManager {
         }
 
     }
+
+    // Deadlock detection.
+    private synchronized List<PageId> getAllLockPageByTid(TransactionId tid) {
+        ArrayList<PageId> pids = new ArrayList<>();
+        for (Map.Entry<PageId, List<Lock>> entry : pageLock.entrySet()) {
+            for (Lock ls : entry.getValue()) {
+                if (ls.tid.equals(tid)) {
+                    pids.add(entry.getKey());
+                }
+            }
+        }
+        return pids;
+    }
+
+    public synchronized boolean deadlockOccurred(TransactionId tid, PageId pid) {//T1为tid，P3为pid
+        List<Lock> whoseLock = pageLock.get(pid);
+        if (whoseLock == null || whoseLock.size() == 0) {
+            return false;
+        }
+        List<PageId> pids = getAllLockPageByTid(tid); // get all pageId locked by tid
+
+        // for all locks in the pageId
+        for (Lock lock : whoseLock) {
+            TransactionId lockHolder = lock.tid;
+
+            // if the lockHolder's tid is not the tid in whoseLock
+            if (!lockHolder.equals(tid)) {
+
+                // determine whether the lockHolder is waiting for pid or not.
+                boolean isWaiting = isWaitingResources(lockHolder, pids, tid);
+                if (isWaiting) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determine whether tid is directly or indirectly waiting for some resources in pids
+     *
+     * @param tid
+     * @param pids
+     * @param tidToRemove Exclude the effect by itself
+     *
+     * @return
+     */
+    private synchronized boolean isWaitingResources(TransactionId tid, List<PageId> pids, TransactionId tidToRemove) {
+        // get the waiting page's PageId in blockMap.
+        PageId waitingPage = blockMap.get(tid);
+        if (waitingPage == null) {
+            return false;
+        }
+
+        // if the PageId of the waiting page is in the pids return true.
+        for (PageId pid : pids) {
+            if (pid.equals(waitingPage)) {
+                return true;
+            }
+        }
+
+        // get the whoseLock from waitingPage PageId
+        List<Lock> whoseLock = pageLock.get(waitingPage);
+
+        // if nothing in the whoseLock, then it's waiting for no pids.
+        if (whoseLock == null || whoseLock.size() == 0) return false;
+
+        // if something in whoseLock, then check every locks in it.
+        for (Lock lock : whoseLock) {
+            TransactionId lockHolder = lock.tid;
+
+            // if the lockHolder is not tidToRemove:
+            if (!lockHolder.equals(tidToRemove)) {
+                // need to check the lockHolder and pids and tidToRemove again to make sure
+                // the lockHolder has no dependency with pids.
+                boolean isWaiting = isWaitingResources(lockHolder, pids, tidToRemove);
+                if (isWaiting) {
+                    return true;
+                }
+            }
+        }
+
+        // if tid passes all the for loop, which means every lockHolder is not directly or indirectly waiting for pids.
+        return false;
+    }
+
+
+    //
+
     private enum Locks{
         NoLock, SharedLock, ExclusiveLock;
     }
@@ -177,7 +262,6 @@ public class LockManager {
 
         public Lock(TransactionId tid, Permissions perm){
             this.tid = tid;
-//            lockType = Locks.NoLock;
             if (perm == Permissions.READ_ONLY){
                 lockType = Locks.SharedLock;
 
@@ -186,13 +270,5 @@ public class LockManager {
                 lockType = Locks.ExclusiveLock;
             }
         }
-
-//        public TransactionId getTid(){
-//            return tid;
-//        }
-//
-//        public Locks getLock(){
-//            return lockType;
-//        }
     }
 }

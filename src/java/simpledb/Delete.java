@@ -1,6 +1,5 @@
-package simpledb;
 
-import java.io.IOException;
+package simpledb;
 
 /**
  * The delete operator. Delete reads tuples from its child operator and removes
@@ -12,10 +11,12 @@ public class Delete extends Operator {
     private TransactionId tid;
     private OpIterator child;
     private boolean called;
+    private int deleteCount;
+
     /**
      * Constructor specifying the transaction that this delete belongs to as
      * well as the child to read from.
-     * 
+     *
      * @param t
      *            The transaction this delete runs in
      * @param child
@@ -25,6 +26,7 @@ public class Delete extends Operator {
         // some code goes here
         this.tid = t;
         this.child = child;
+        deleteCount = 0;
     }
 
     public TupleDesc getTupleDesc() {
@@ -37,7 +39,12 @@ public class Delete extends Operator {
         super.open();
         child.open();
         called = false;
+        while (child.hasNext()) {
+            Tuple tuple = child.next();
+            deleteCount++;
+            Database.getBufferPool().deleteTuple(tid, tuple);
 
+        }
     }
 
     public void close() {
@@ -56,41 +63,26 @@ public class Delete extends Operator {
      * Deletes tuples as they are read from the child operator. Deletes are
      * processed via the buffer pool (which can be accessed via the
      * Database.getBufferPool() method.
-     * 
+     *
      * @return A 1-field tuple containing the number of deleted records.
      * @see Database#getBufferPool
      * @see BufferPool#deleteTuple
      */
+
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
 //        return null;
-        try{
             if (called) {
                 return null;
             }
             called = true;
-            int deleteCount = 0;
-            while (child.hasNext()) {
-                Tuple tuple = child.next();
-                deleteCount++;
-                Database.getBufferPool().deleteTuple(tid, tuple);
-            }
+
             Tuple tuple = new Tuple(getTupleDesc());
             tuple.setField(0, new IntField(deleteCount));
             return tuple;
-        }
-        catch (DbException e){
-            e.printStackTrace();
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-        catch (TransactionAbortedException e){
-            e.printStackTrace();
-        }
-        return null;
 
     }
+
 
     @Override
     public OpIterator[] getChildren() {

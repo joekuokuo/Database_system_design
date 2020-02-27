@@ -17,7 +17,6 @@ public class HeapFile implements DbFile {
 
     private final File file;
     private final TupleDesc td;
-//    private int numPages;
     private final int tableId;
     final int pageSize = BufferPool.getPageSize();
 
@@ -33,10 +32,6 @@ public class HeapFile implements DbFile {
 
         this.file = f;
         this.td = td;
-//        this.numPages = (int)(file.length()/ pageSize);
-//
-
-//        this.numPages = (int) file.length() / BufferPool.getPageSize();
         this.tableId = file.getAbsoluteFile().hashCode();
     }
 
@@ -109,21 +104,7 @@ public class HeapFile implements DbFile {
 //        byte[] empty = new byte[numTuples * 8 + headerSize];
 //        page.getPageData() =
         try{
-//            boolean isEmplty = true;
-//            int count0 = 0;
-//            byte[] empty = new byte[page.getPageData().length];
-//            byte[] dum = page.getPageData();
-//            for (int i = 0; i < page.getPageData().length; i++){
-//                if (page.getPageData()[i] == 0){
-//                    count0++;
-//                }
-//            }
-//            if (count0 == page.getPageData().length){
-//                return;
-//            }
-//            if ((page.getPageData()|empty) == 0){
-//                return;
-//            }
+
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
             randomAccessFile.seek(BufferPool.getPageSize() * page.getId().getPageNumber());
             randomAccessFile.write(page.getPageData());
@@ -140,7 +121,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-//        return numPages;
+//        return numPages; causing error
         return (int)(file.length()/ pageSize);
     }
 
@@ -150,30 +131,32 @@ public class HeapFile implements DbFile {
         // some code goes here
         // Lab2:
         ArrayList<Page> changePages = new ArrayList<>();
-//        int i = 0;
-//        boolean pageFull = true;
         for (int i = 0; i < numPages(); ++i) {
             PageId pid = new HeapPageId(getId(), i);
-            HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_ONLY);
+            // Acquire write lock
+            HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
 
+            // if there are spaces, insert tuple can be performed
             if (page.getNumEmptySlots() > 0) {
-                page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
                 page.insertTuple(t);
                 changePages.add(page);
-//                pageFull = false;
+                page.markDirty(true, tid);
             }
         }
-//        System.out.println(pageSize); // 4096
-//        if (numPages == 0 || pageFull) {
+
+        // every pages in BufferPool is full, then need to create a new blank page.
+        // no thing added to the changePages list.
         if(changePages.size() == 0){
             PageId pageId = new HeapPageId(getId(), numPages());
-            HeapPage newPage = new HeapPage((HeapPageId)pageId, new byte[BufferPool.getPageSize()]);
+            HeapPage blank = new HeapPage((HeapPageId)pageId, new byte[BufferPool.getPageSize()]);
+            writePage(blank);
+
+            HeapPage newPage = (HeapPage) Database.getBufferPool().getPage(tid, pageId, Permissions.READ_WRITE);
             newPage.insertTuple(t);
             newPage.markDirty(true, tid);
-            writePage(newPage);
             changePages.add(newPage);
-//            numPages++;
         }
+
         return changePages;
 
     }
@@ -192,7 +175,6 @@ public class HeapFile implements DbFile {
         page.markDirty(true, tid);
 
         return new ArrayList<Page>(List.of(page));
-
     }
 
     // see DbFile.java for javadocs
