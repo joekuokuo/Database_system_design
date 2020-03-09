@@ -198,6 +198,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      * @param commit a flag indicating whether we should commit or abort
      */
+
     public void transactionComplete(TransactionId tid, boolean commit)
             throws IOException {
         // some code goes here
@@ -206,25 +207,50 @@ public class BufferPool {
         // refer: https://www.geeksforgeeks.org/iterate-map-java/
 
         // iterate through the whole map.
-        Iterator<Entry<PageId, Page>> nextPage = pidToPage.entrySet().iterator();
-        while (nextPage.hasNext()){
-            Entry<PageId,Page> next = nextPage.next();
-            PageId pid = next.getKey();
-            Page page = next.getValue();
 
-            if(tid.equals(page.isDirty())){
-                // Commit
-                if(commit){
-                    flushPage(pid);
-                    page.markDirty(false, null);
-                    page.setBeforeImage();
+//        Iterator<Entry<PageId, Page>> nextPage = pidToPage.entrySet().iterator();
+//        while (nextPage.hasNext()) {
+//            Entry<PageId, Page> next = nextPage.next();
+//            PageId pid = next.getKey();
+//            Page page = next.getValue();
+//
+//            if (tid.equals(page.isDirty())) {
+//                // Commit
+//                if (commit) {
+//
+//                    flushPage(pid); // flush when commit the transaction
+//                    page.markDirty(false, null);
+////                    Database.getLogFile().logWrite(tid, page.getBeforeImage(), page);
+//                    page.setBeforeImage();
+//
+//                }
+//                // Abort
+//                else {
+//                    pidToPage.put(pid, page.getBeforeImage());
+//
+//                }
+//            }
+
+        // Or we can just use map.value to iterate :)
+        if(commit){
+            for(Page p : pidToPage.values()) {
+                if (tid.equals(p.isDirty())) {
+                    // Force policy
+                    // flush when commit the transaction
+                    // flushPage(p.getId());
+
+                    // No force policy
+                    Database.getLogFile().logWrite(tid, p.getBeforeImage(), p);
                 }
-                // Abort
-                else {
-                    pidToPage.put(pid, page.getBeforeImage());
-                }
+                p.setBeforeImage();
             }
         }
+        else {
+            for(Page p : pidToPage.values()) {
+                pidToPage.put(p.getId(), p.getBeforeImage());
+            }
+        }
+
         lockManager.releaseAllTransactionLocks(tid);
     }
 
@@ -341,10 +367,11 @@ public class BufferPool {
         // not necessary for lab1
         DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
         HeapPage page = (HeapPage) pidToPage.get(pid);
-        TransactionId dirtyId = page.isDirty();
-        if (dirtyId != null) {
-            Database.getLogFile().logWrite(dirtyId, page.getBeforeImage(), page);
+        TransactionId dirtyTid = page.isDirty();
+        if (dirtyTid != null) {
+            Database.getLogFile().logWrite(dirtyTid, page.getBeforeImage(), page);
             Database.getLogFile().force();
+            pidToPage.remove(pid);
             file.writePage(page);
             page.markDirty(false, null);
         }
@@ -355,7 +382,12 @@ public class BufferPool {
     public synchronized void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
-
+        for (PageId pid: pidToPage.keySet()){
+            TransactionId dirtyTid = pidToPage.get(pid).isDirty();
+            if(dirtyTid.equals(tid)){
+                flushPage(pid);
+            }
+        }
 
     }
 
@@ -374,10 +406,12 @@ public class BufferPool {
             PageId pid = next.getKey();
             HeapPage p = (HeapPage)next.getValue();
 
+            // Disabled for Lab 5
+            // NO STEAL policy
             // never evict dirty pages.
-            if (p.isDirty() != null) {
-                continue;
-            }
+//            if (p.isDirty() != null) {
+//                continue;
+//            }
             pidToPage.remove(pid);
         }
 

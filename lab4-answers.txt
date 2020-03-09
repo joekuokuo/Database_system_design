@@ -1,0 +1,31 @@
+Rollback:
+
+We first get the first recordId from the HashMap tidToFirstLogRecord by corresponding tid.
+Set two pointer initial pointer and end pointer to indicate the current offset of this file and
+current offset we recorded as a global variable, which they should be the same at first. Start
+the pointer at first recordId we found, and read the type in the next Int and the transactionId
+in the next Long. Check if the type is UPDATE_RECORD or not. If so, we read the first page data
+from raf pinter as before page and read the next page as the after page. This structure is indicate
+in the description in UPDATE RECORDS above. If not UPDATE_RECORD, we skip the last long as it
+represents the start of this log. And iterate this process until the pointer meets the end pointer.
+Then we reset the pointer to the initial pointer.
+
+Recover:
+
+If we need to recover, we need to first check if there exists a check point in the front of the
+raf pointer. If there is a check point, then we can start read raf pointer from where the last check
+pointer started. After skipping the first Int and Long, we can then read the total number of the active
+transactions. As the number indicated, we iterate through the total number of time to get every type
+and recordId in the log in sequence, and add them into uncommitted transactionId set and HashMap
+tidToFirstLogRecord. After reading the check point, if exists, we can carry on to read the rest of the
+log. While the pointer of raf is less then the length of raf, we store the starting pointer as the file
+pointer indicates, and read the type and the transactionId respectively. There are four results of the
+type. If it's ABORT_RECORD, we rollback the transaction and remove it from the uncommitted transaction
+set. If it's COMMIT_RECORD, simply remove it from the uncommitted transaction set. If it's UPDATE_RECORD,
+we read two pages, the first one is the before page, the second one is after page. We only write the after
+page back to the file. If it's BEGIN_RECORD, we add the transaction to the uncommitted transaction set,
+and put the transactionId and the starting pointer to the tidToFirstLogRecord HashMap. Finally skip the
+last long integer representing the start of this log.
+
+From those transaction in the uncommitted set, they all need to rollback to their original state. Set the
+current offset to the current file size.

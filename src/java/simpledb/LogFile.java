@@ -105,7 +105,7 @@ public class LogFile {
         @param f The log file's name
     */
     public LogFile(File f) throws IOException {
-	this.logFile = f;
+	    this.logFile = f;
         raf = new RandomAccessFile(f, "rw");
         recoveryUndecided = true;
 
@@ -222,7 +222,7 @@ public class LogFile {
         PageId pid = p.getId();
         int pageInfo[] = pid.serialize();
 
-        //page data is:
+        // page data is:
         // page class name
         // id class name
         // id class bytes
@@ -342,7 +342,7 @@ public class LogFile {
                     raf.writeLong(tidToFirstLogRecord.get(key));
                 }
 
-                //once the CP is written, make sure the CP location at the
+                // once the CP is written, make sure the CP location at the
                 // beginning of the log file is updated
                 endCpOffset = raf.getFilePointer();
                 raf.seek(0);
@@ -461,12 +461,67 @@ public class LogFile {
 
         @param tid The transaction to rollback
     */
+
+
     public void rollback(TransactionId tid)
-        throws NoSuchElementException, IOException {
+            throws NoSuchElementException, IOException {
+        rollback(tid.getId());
+    }
+
+    /** Helper method to avoid casting from long to TransactionId, something went wrong
+     * while castint the TransactionId to long.
+     *
+     * @param tid The transaction to rollback
+     */
+
+    private void rollback(long tid)
+            throws NoSuchElementException, IOException {
         synchronized (Database.getBufferPool()) {
             synchronized(this) {
                 preAppend();
                 // some code goes here
+                Long firstRid = tidToFirstLogRecord.get(tid);
+
+                if (firstRid == null) {
+                    return;
+                }
+
+                long initialPointer = raf.getFilePointer();
+                long endPointer = currentOffset;
+
+                // currentOffset = -1 : haven't started
+                if (currentOffset == -1) {
+                    endPointer = raf.length();
+                }
+
+                Set<PageId> rolledbackPages = new HashSet<PageId>();
+                raf.seek(firstRid);
+
+                while (raf.getFilePointer() < endPointer) {
+                    int type = raf.readInt();
+                    long currentTid = raf.readLong();
+
+                    if(type == UPDATE_RECORD){
+                        // we only need the page before
+                        Page before = readPageData(raf);
+                        // unused
+                        Page after = readPageData(raf);
+
+                        if (currentTid == tid) {
+                            PageId pid = before.getId();
+
+                            if (!rolledbackPages.contains(pid)) {
+                                rolledbackPages.add(pid);
+                                Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(before);
+                            }
+                        }
+                    }
+
+                    // skip the last long integer representing the start of this log
+                    raf.seek(raf.getFilePointer() + LONG_SIZE);
+                }
+                // return the pointer to initial position
+                raf.seek(initialPointer);
             }
         }
     }
@@ -494,6 +549,71 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+
+                Set<Long> uncommittedTrans = new HashSet<>();
+                // seek the first log
+                raf.seek(0);
+                // the first log is lastCpStartOffset which indicate the starting point of the last check point
+                long lastCpStartOffset = raf.readLong();
+
+                // last checkpoint exist
+                if (lastCpStartOffset > 0) {
+                    raf.seek(lastCpStartOffset);
+                    // skip Cp type and tid
+                    raf.seek(raf.getFilePointer() + INT_SIZE + LONG_SIZE);
+                    int numActiveTrans = raf.readInt();
+
+                    for (int i = 0; i < numActiveTrans; i++) {
+                        // read every type and recordId
+                        long tid = raf.readLong();
+                        long rid = raf.readLong();
+                        uncommittedTrans.add(tid);
+                        tidToFirstLogRecord.put(tid, rid);
+                    }
+                    // skip the last long integer representing the start of this log
+                    raf.seek(raf.getFilePointer() + LONG_SIZE);
+                }
+
+                // After current pointer there will be no check point
+                while (raf.getFilePointer() < raf.length()) {
+                    long startPointer = raf.getFilePointer();
+                    int type = raf.readInt();
+                    long tid = raf.readLong();
+
+                    switch(type) {
+                        case ABORT_RECORD:
+                            rollback(tid);
+                            uncommittedTrans.remove(tid);
+                            break;
+                        case COMMIT_RECORD:
+                            // no need to rollback
+                            uncommittedTrans.remove(tid);
+                            break;
+                        case UPDATE_RECORD:
+                            // unused
+                            Page before = readPageData(raf);
+                            // need the page after
+                            Page after = readPageData(raf);
+                            PageId pid = after.getId();
+                            Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(after);
+                            break;
+                        case BEGIN_RECORD:
+                            uncommittedTrans.add(tid);
+                            tidToFirstLogRecord.put(tid, startPointer);
+                            break;
+                    }
+
+                    // skip the last long integer representing the start of this log
+                    raf.seek(raf.getFilePointer() + LONG_SIZE);
+                }
+
+                // rollback those transactions that are uncommitted
+                for (Long tid : uncommittedTrans) {
+                    rollback(tid);
+                }
+
+                // set currentOffset to the current file size
+                currentOffset = raf.getFilePointer();
             }
          }
     }
