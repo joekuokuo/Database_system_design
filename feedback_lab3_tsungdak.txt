@@ -1,0 +1,18 @@
+tsungdak
+
+Unit Test score: 45
+System Test score: 31.16438
+Code score: 10
+Writeup score: 9
+Extra credit? no
+Total score: 96
+
+Write-up feedback:
+Good writeup.
+Could use a little more discussion on your design process/decisions.
+
+Code feedback:
+Nice implementation of LockManager. Cool recursive cycle detection implementation.
+
+There's a lot of logic specific to cycle detection and graphs within it, my suggestion would be to make another generic class, ex Graph.java, and use that within LockManager to better modularize your code.
+Overall, great work on all the labs so far! 
