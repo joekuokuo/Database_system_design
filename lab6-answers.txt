@@ -1,7 +1,7 @@
 Worker:
 
 To run the workers, I run the query by converting the query to a
-collectproducer.
+collectProducer.
 
 ====================================================================================
 
@@ -24,3 +24,60 @@ To run the ShuffleProducer, I assign three maps to store the relationship for
 worker-IoSession, worker-buffer and worker-time. For each worker, I assign an
 initial value for all maps. By starting with the first OpIterator child, I
 first check if it's not null. Then use the information obtain from the child
+Get the partition position from the PartitionFunction and obtain the consumer
+worker by workers array from this information. With the Id of consumer worker,
+it's straight forward to map back to the list of tuples, Iosession and time stamp.
+The most important part is to check whether the buffer of tuple size and the time
+gap. If the size of the buffer is bigger than the max size of tupleBag, then
+the session needs to be written into disk and clear the buffer and set the time
+to current time. If the size of buffer is bigger than the min size of tupleBag,
+then it's necessary to check the time gap. If the time gap is still bigger than
+the max time gap in tupleBag, then the session need to be written into disk and
+clear the buffer.
+
+Finally, for every worker in array of workers, check its buffer size, if the size
+is positive, then write the session to disk. Otherwise, assign a new session for
+it.
+
+====================================================================================
+
+ShuffleConsumer
+
+I assign a map to store the worker-index relationship and assign the index sequentially
+in the constructor. Two helper variables are also assigned, a transient int interiorBufferIndex
+and a transient ArrayList interiorBuffer storing TupleBags. The Iterator getTuples()
+method is tricky. If the interiorBufferIndex is bigger than the size of interiorBuffer,
+simply return the iterator of the TupleBag in interiorBuffer with correspond interiorBufferIndex.
+Start a loop, while worker BitSet started from index 0 is smaller then the length of
+workers array. If the tuple is null, the BitSet is assigned to be the corresponding
+worker's index in the HsshMap. If the tuple is not null, the tupleBag is added to
+the interiorBuffer, and the interiorBufferIndex increased by 1 and return the iterator
+of the tupleBag.
+
+====================================================================================
+
+Result of three of the queries:
+
+1 worker:
+    Q | cold | warm
+    Q1: 2.61 , 2.3
+    Q2: 1.65 , 0.89
+    Q3: 6.71 , 5.72
+
+2 worker:
+    Q | cold | warm
+    Q1: 1.73 , 0.15
+    Q2: 1.23 , 0.44
+    Q3: 5.44 , 3.04
+
+4 worker:
+    Q | cold | warm
+    Q1: 1.98 , 1.13
+    Q2: 2.21 , 1.02
+    Q3: 4.33 , 2.98
+
+For 2 workers working paralleled, the result is apparently better than the single worker.
+For 4 workers working paralleded, the result is ocassionally better than the 2 worker scenario.
+The reason might be that the data is not big enough, so the parallel process most of the
+time to partition the data to each node which might waste some time.
+
