@@ -14,7 +14,8 @@ public class SeqScan implements OpIterator {
     private TupleDesc td;
     private int tableid;
     private String tableAlias;
-    private DbFileIterator dbFileIterator;
+    private String tableName;
+    private transient DbFileIterator dbFileIterator;
 
     private boolean debug = false;
     /**
@@ -42,6 +43,7 @@ public class SeqScan implements OpIterator {
         // use the iterator in HeapFile
         this.dbFileIterator = db.iterator(tid);
         this.td = db.getTupleDesc();
+        this.tableName = Database.getCatalog().getTableName(tableid);
 
     }
 
@@ -51,7 +53,8 @@ public class SeqScan implements OpIterator {
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-        return Database.getCatalog().getTableName(tableid);
+//        return Database.getCatalog().getTableName(tableid);
+        return tableName;
     }
 
     /**
@@ -82,6 +85,7 @@ public class SeqScan implements OpIterator {
         DbFile db = Database.getCatalog().getDatabaseFile(tableid);
         this.dbFileIterator = db.iterator(tid);
         this.td = db.getTupleDesc();
+        this.tableName = Database.getCatalog().getTableName(tableid);
     }
 
     public SeqScan(TransactionId tid, int tableId) {

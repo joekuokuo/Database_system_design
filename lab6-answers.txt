@@ -1,0 +1,26 @@
+Worker:
+
+To run the workers, I run the query by converting the query to a
+collectproducer.
+
+====================================================================================
+
+localizeQueryPlan:
+
+It's necessary to check the type of the query plan. If the query plan
+is a SeqScan, then it is reset by a tableId and the Alias of SecScan.
+If the query plan is a Operator, it can be check whether it's a Producer
+or a Consumer. If it's a Producer It can be simply set the worker to this
+worker. If it's a Consumer, then it's used to set the buffer of the plan.
+I assign an array of OpIterator call children to store the children value
+from the query plan. For each children it's necessary to recursively check
+all its descendant to traversal all the node in the tree.
+
+====================================================================================
+
+ShuffleProducer:
+
+To run the ShuffleProducer, I assign three maps to store the relationship for
+worker-IoSession, worker-buffer and worker-time. For each worker, I assign an
+initial value for all maps. By starting with the first OpIterator child, I
+first check if it's not null. Then use the information obtain from the child
