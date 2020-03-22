@@ -1,0 +1,14 @@
+tsungdak
+
+Unit Test score: 45
+System Test score: 35
+Code score: 10
+Writeup score: 9
+Total score: 99
+
+Code Feedback:
+Good job implementing LogFile!
+
+Writeup Feedback:
+NIce concise write-up.
+No included unit test idea
