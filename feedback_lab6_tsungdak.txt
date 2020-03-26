@@ -1,0 +1,11 @@
+Kuo, Tsung-Da
+CSE 444 AD
+tsungdak
+--------------------------------------------------------------
+Total Score (50): 35
+Unit Test Score (30): 30
+System Test Score (+5): 5
+Code Score (10): 
+Writeup Score (10): 
+--------------------------------------------------------------
+Writeup Feedback: Good discussion on components! Nice data with succinct discussion.  Code Feedback: Good job with lab6! Hope you enjoyed 444! 
